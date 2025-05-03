@@ -1,1 +1,1 @@
-C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\target\debug\correspondencs-arcs.exe: C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\data.rs C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\main.rs
+C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\target\debug\correspondencs-arcs.exe: C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\board.rs C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\data.rs C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\main.rs
