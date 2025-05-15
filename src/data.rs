@@ -1,26 +1,28 @@
 #![allow(dead_code)]
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Color {
+    None,
     Red,
     Blue,
     White,
     Yellow
 }
 
-#[derive(Clone, Debug)]
-pub struct Ship {
-    fresh: bool,
-    player: Color
+#[derive(Clone, Debug, PartialEq)]
+pub struct Ships {
+    pub player: Color,
+    pub fresh: u8,
+    pub damaged: u8
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BuildingType {
     City,
     Starport
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BuildingSlot {
     Occupied {fresh: bool, player: Color, building_type: BuildingType},
     Empty
@@ -39,7 +41,7 @@ pub enum System {
     system_id: u8,
     system_type: SystemType,
     building_slots: Vec<BuildingSlot>,
-    ships: Vec<Ship>,
+    ships: Vec<Ships>,
     controlled_by: Option<Color>,
     connects_to: Vec<u8>
     }
@@ -65,7 +67,8 @@ pub enum ResourceType {
     Psionics
 }
 
-enum CourtCard {
+#[derive(Clone, Debug)]
+pub enum CourtCard {
     Vox {
         title: String,
         description: String,
@@ -80,38 +83,45 @@ enum CourtCard {
     }
 }
 
-enum ResourceSlot {
+#[derive(Clone, Debug)]
+pub enum ResourceSlot {
     Used {keys: u8, resource: ResourceType},
     Unused {keys: u8},
     Covered
 }
 
-struct Agent{color: Color}
+#[derive(Clone, Debug)]
+pub struct Agent{color: Color}
 
-enum TrophyType {
+#[derive(Clone, Debug)]
+pub enum TrophyType {
     Ship,
     Building,
     Agent
 }
 
-struct Trophy {
+#[derive(Clone, Debug)]
+pub struct Trophy {
     trophy_type: TrophyType,
     player: Color
 }
 
-enum BuildType{
+#[derive(Clone, Debug)]
+pub enum BuildType{
     Starport,
     City,
     Ship
 }
 
-enum Dice{
+#[derive(Clone, Debug)]
+pub enum Dice{
     Skirmish,
     Assault,
     Raid
 }
 
-enum Action{
+#[derive(Clone, Debug)]
+pub enum Action{
     Build {target_system: u8, build_type: BuildType},
     Repair {target_system: u8, build_type: BuildType},
     Tax {target_system: u8, resource: ResourceType},
@@ -121,6 +131,7 @@ enum Action{
     Battle {target_system: u8, target_player: Color, dice: Vec<Dice>}
 }
 
+#[derive(Clone, Debug)]
 pub enum ActionType{
     Administration,
     Agression,
@@ -128,6 +139,7 @@ pub enum ActionType{
     Mobilization
 }
 
+#[derive(Clone, Debug)]
 pub struct ActionCard{
     action_type: ActionType,
     number: u8,
@@ -135,23 +147,25 @@ pub struct ActionCard{
     declared_ambition: Option<AmbitionTypes>
 }
 
-struct PlayerArea {
-    player: Color,
-    initiative: bool,
-    action_cards: Vec<ActionCard>,
-    controlled_systems: Vec<System>,
-    controlled_ships: Vec<Ship>,
-    controlled_buildings: Vec<BuildingSlot>,
-    guild_cards: Vec<CourtCard>,
-    reserve_ships: u8,
-    reserve_agents: u8,
-    reserve_starports: u8,
-    reserve_cities: u8,
-    resource_slots: Vec<ResourceSlot>,
-    captives: Vec<Agent>,
-    tropies: Vec<Trophy>
+#[derive(Clone, Debug)]
+pub struct PlayerArea {
+    pub player: Color,
+    pub initiative: bool,
+    pub action_cards: Vec<ActionCard>,
+    pub controlled_systems: Vec<System>,
+    pub controlled_ships: Vec<Ships>,
+    pub controlled_buildings: Vec<BuildingSlot>,
+    pub guild_cards: Vec<CourtCard>,
+    pub reserve_ships: u8,
+    pub reserve_agents: u8,
+    pub reserve_starports: u8,
+    pub reserve_cities: u8,
+    pub resource_slots: Vec<ResourceSlot>,
+    pub captives: Vec<Agent>,
+    pub tropies: Vec<Trophy>
 }
 
+#[derive(Clone, Debug)]
 struct AmbitionMarker{
     first_place: u8,
     second_place: u8,
@@ -160,6 +174,7 @@ struct AmbitionMarker{
     second_place_flipped: u8
 }
 
+#[derive(Clone, Debug)]
 pub enum AmbitionTypes {
     Tycoon,
     Tyrant,
@@ -168,27 +183,30 @@ pub enum AmbitionTypes {
     Empath
 }
 
+#[derive(Clone, Debug)]
 struct Ambition{
     ambition_type: AmbitionTypes,
     markers: Vec<AmbitionMarker>
 }
 
-enum TurnState {
+#[derive(Clone, Debug)]
+pub enum TurnState {
     TrickTaking,
     Prelude,
     Actions {action_type: ActionType, pips_left: u8}
 }
 
-struct GameState {
-    players: Vec<PlayerArea>,
-    current_player: Color,
-    turn_state: TurnState,
-    chapter: u8,
-    systems: Vec<System>,
-    court: Vec<CourtCard>,
-    court_draw_pile: Vec<CourtCard>,
-    dourt_discard_pile: Vec<CourtCard>,
-    action_discard: Vec<ActionCard>,
-    lead_card: Option<ActionCard>,
-    follow_cards: Vec<ActionCard>
+#[derive(Clone, Debug)]
+pub struct GameState {
+    pub players: Vec<PlayerArea>,
+    pub current_player: Color,
+    pub turn_state: TurnState,
+    pub chapter: u8,
+    pub systems: Vec<System>,
+    pub court: Vec<CourtCard>,
+    pub court_draw_pile: Vec<CourtCard>,
+    pub court_discard_pile: Vec<CourtCard>,
+    pub action_discard: Vec<ActionCard>,
+    pub lead_card: Option<ActionCard>,
+    pub follow_cards: Vec<ActionCard>
 }
