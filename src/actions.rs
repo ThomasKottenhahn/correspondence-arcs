@@ -8,7 +8,15 @@ use crate::data::Ships;
 use crate::data::System;
 use crate::data::BuildingSlot;
 
-fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot>{ 
+fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot>{
+    if building_slots.len() == 0{
+        panic!("No building slots available");
+    }
+
+    if building_slots.iter().all(|x| matches!(x, BuildingSlot::Occupied { .. })) {
+        panic!("All building slots are occupied");
+    }
+
     for i in 0..building_slots.len(){
         if building_slots[i] == BuildingSlot::Empty{
             let mut building_slots = building_slots.clone();
@@ -56,7 +64,7 @@ pub fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -
     let system: System = game_state.systems[target_system as usize].clone();
 
     match system{
-        System::Unused => return game_state.clone(),
+        System::Unused => panic!("System is unused"),
         System::Used {
             system_id,
             system_type,
