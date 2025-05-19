@@ -2,7 +2,6 @@ use crate::board::update_control;
 use crate::data::GameState;
 use crate::data::Color;
 use crate::data::Action;
-use crate::data::Action::Build;
 use crate::data::BuildType;
 use crate::data::BuildingType;
 use crate::data::Ships;
@@ -20,13 +19,28 @@ fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) ->
     return building_slots.clone();
 }
 
-fn place_ship(ships: &Vec<Ships>, player: Color, fresh: bool) -> Vec<Ships>{
+fn place_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships>{
     let mut new_ships: Vec<Ships> = vec![];
     for ships_struct in ships{
         if ships_struct.player == player {
             let mut ships_struct = ships_struct.clone();
-            if fresh {ships_struct.fresh = ships_struct.fresh + 1}
-            else {ships_struct.damaged = ships_struct.damaged + 1}
+            ships_struct.fresh = ships_struct.fresh + fresh;
+            ships_struct.damaged = ships_struct.damaged + damaged;
+            new_ships.push(ships_struct);
+        } else {
+            new_ships.push(ships_struct.clone());
+        }
+    }
+    return new_ships;
+}
+
+fn remove_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships>{
+    let mut new_ships: Vec<Ships> = vec![];
+    for ships_struct in ships{
+        if ships_struct.player == player {
+            let mut ships_struct = ships_struct.clone();
+            ships_struct.fresh = ships_struct.fresh - fresh;
+            ships_struct.damaged = ships_struct.damaged - damaged;
             new_ships.push(ships_struct);
         } else {
             new_ships.push(ships_struct.clone());
@@ -61,7 +75,7 @@ pub fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -
                     system_id: system_id, 
                     system_type: system_type.clone(), 
                     building_slots: building_slots.clone(), 
-                    ships: place_ship(&ships, current_player, build_fresh), 
+                    ships: place_ships(&ships, current_player, if build_fresh {1} else {0}, if !build_fresh {0} else {0}), 
                     controlled_by: controlled_by.clone(), 
                     connects_to: connects_to.clone() }
                 ),
@@ -92,9 +106,62 @@ pub fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -
     
 }
 
-fn execute_action(game_state: &GameState, action: Action) -> GameState {
+pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_system_id: u8, fresh: u8, damaged: u8) -> GameState{
+    let mut game_state = game_state.clone();
+
+    let origin_system = game_state.systems[origin_system_id as usize].clone();
+    let destination_system = game_state.systems[destination_system_id as usize].clone();
+
+    match origin_system{
+        System::Unused => panic!("Origin system is unused"),
+        System::Used {
+            system_id,
+            system_type,
+            building_slots,
+            ships,
+            controlled_by,
+            connects_to
+        } => {
+            let updated_ships = remove_ships(&ships, game_state.current_player.clone(), fresh, damaged);
+            game_state.systems[origin_system_id as usize] = update_control(&System::Used {
+                system_id,
+                system_type: system_type.clone(),
+                building_slots: building_slots.clone(),
+                ships: updated_ships,
+                controlled_by: controlled_by.clone(),
+                connects_to: connects_to.clone(),
+            });
+        }
+    }
+
+    match destination_system{
+        System::Unused => panic!("Destination system is unused"),
+        System::Used {
+            system_id,
+            system_type,
+            building_slots,
+            ships,
+            controlled_by,
+            connects_to
+        } => {
+            let updated_ships = place_ships(&ships, game_state.current_player.clone(), fresh, damaged);
+            game_state.systems[destination_system_id as usize] = update_control(&System::Used {
+                system_id: system_id, 
+                system_type: system_type.clone(), 
+                building_slots: building_slots.clone(), 
+                ships: updated_ships, 
+                controlled_by: controlled_by.clone(), 
+                connects_to: connects_to.clone() })
+        }
+    }
+
+    return game_state;
+}
+
+pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
     return match action {
-        Build {target_system: s, build_type: b} => build(game_state, s, b),
+        Action::Build {target_system, build_type} => build(game_state, target_system, build_type),
+        Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
         _ => game_state.clone()
     };
 }

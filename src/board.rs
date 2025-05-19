@@ -1,5 +1,7 @@
+use crate::data;
 use crate::data::GameState;
 use crate::data::PlayerArea;
+use crate::data::Ships;
 use crate::data::TurnState;
 use crate::data::SetupCard;
 use crate::data::System;
@@ -10,6 +12,9 @@ use crate::data::ResourceType;
 
 
 fn create_reach(setup_card: &SetupCard) -> Vec<System> {
+    let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow];
+    let empty_ships: Vec<Ships> = all_colors[0..(setup_card.players as usize)].iter().map(|x| Ships{player: x.clone(), fresh: 0, damaged: 0}).collect();
+
     let mut systems:Vec<System> = vec![];
     // Create Gates
     for i in 0..6 {
@@ -36,7 +41,7 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
                 system_id: i,
                 system_type: SystemType::Gate,
                 building_slots: vec![],
-                ships: vec![],
+                ships: empty_ships.clone(),
                 controlled_by: None,
                 connects_to: connections
             }
@@ -78,7 +83,7 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
                     system_id: (6+i) as u8,
                     system_type: SystemType::Planet {resource: resource_types[i].clone()},
                     building_slots: systems_building_slots,
-                    ships: vec![],
+                    ships: empty_ships.clone(),
                     controlled_by: None,
                     connects_to: connections
                 }
@@ -91,10 +96,10 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
     return systems;
 }
 
-fn setup_player_area(player_color: &Color, initiative: bool) -> PlayerArea{
+fn setup_player_area(player_color: &Color) -> PlayerArea{
     return PlayerArea{
         player: player_color.clone(),
-        initiative: initiative,
+        initiative: false,
         action_cards: vec![],
         controlled_systems: vec![],
         controlled_ships: vec![],
@@ -112,7 +117,9 @@ fn setup_player_area(player_color: &Color, initiative: bool) -> PlayerArea{
 }
 
 pub fn setup_game(setup_card: &SetupCard) -> GameState {
-    let players: Vec<PlayerArea> = vec![Color::Red, Color::Blue].iter().map(|x|setup_player_area(x, false)).collect();
+    let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow];
+    let mut players: Vec<PlayerArea> = all_colors[0..(setup_card.players as usize)].iter().map(|x|setup_player_area(x)).collect();
+    players[0].initiative = true;
     return GameState{
         players: players,
         current_player: Color::Red,
