@@ -58,7 +58,7 @@ pub struct SetupCard {
     pub cluster_out_of_play: Vec<u8>,
     pub a_locations: Vec<u8>,
     pub b_locations: Vec<u8>,
-    pub c_loactions: Vec<u8>
+    pub c_locations: Vec<u8>
 }
 
 #[derive(Clone, Debug)]
@@ -189,7 +189,8 @@ pub enum AmbitionTypes {
 #[derive(Clone, Debug)]
 struct Ambition{
     ambition_type: AmbitionTypes,
-    markers: Vec<AmbitionMarker>
+    markers: Vec<AmbitionMarker>,
+    discarded_resources: Vec<ResourceType>
 }
 
 #[derive(Clone, Debug)]

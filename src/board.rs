@@ -119,7 +119,7 @@ fn setup_player_area(player_color: &Color) -> PlayerArea {
 }
 
 pub fn setup_game(setup_card: &SetupCard) -> GameState {
-    let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow];
+    let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow].iter().take(setup_card.players.into()).cloned().collect();
     let mut players: Vec<PlayerArea> = all_colors[0..(setup_card.players as usize)].iter().map(|x|setup_player_area(x)).collect();
     players[0].initiative = true;
 
@@ -182,7 +182,41 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
             acc
         });
 
-        
+    println!("{:?}", setup_card
+        .c_locations
+        .iter()
+        .zip(all_colors.iter().chain(&all_colors)).collect::<Vec<_>>());
+
+    let systems = setup_card
+        .c_locations
+        .iter()
+        .zip(all_colors.iter().chain(&all_colors))
+        .fold(systems, |mut acc, (&system_id, color)| {
+            let idx = system_id as usize;
+            let (left, right) = acc.split_at_mut(idx);
+            let system = &mut right[0];
+            match system{
+                System::Used { 
+                    system_id,
+                    system_type,
+                    building_slots,
+                    ships,
+                    controlled_by,
+                    connects_to 
+                } => *system = System::Used { 
+                    system_id: *system_id,
+                    system_type: system_type.clone(),
+                    building_slots: building_slots.clone(),
+                    ships: place_ships(&ships, color.clone(), 2, 0),
+                    controlled_by: controlled_by.clone(),
+                    connects_to: connects_to.to_vec()
+                },
+                System::Unused => panic!("Cannot setup in unused System")
+            };
+            acc
+        });
+
+    let systems = systems.iter().map(|s| update_control(s)).collect();
 
 
     return GameState{

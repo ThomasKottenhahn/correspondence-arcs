@@ -6,7 +6,7 @@ mod test {
 
     #[test]
     fn move_1_ship() {
-        let test_setup: data::SetupCard = data::SetupCard { players: 2, cluster_out_of_play: vec![0,5], a_locations: vec![19,11], b_locations: vec![16, 17], c_loactions: vec![2,13,4,14]};
+        let test_setup: data::SetupCard = data::SetupCard { players: 2, cluster_out_of_play: vec![0,5], a_locations: vec![19,11], b_locations: vec![16, 17], c_locations: vec![2,4,14,15]};
         let game_state: data::GameState = board::setup_game(&test_setup);
 
         let origin_system = 16;
@@ -34,7 +34,7 @@ mod test {
 
     #[test]
     fn move_all_ships() {
-        let test_setup: data::SetupCard = data::SetupCard { players: 2, cluster_out_of_play: vec![0,5], a_locations: vec![19,11], b_locations: vec![16, 17], c_loactions: vec![2,13,4,14]};
+        let test_setup: data::SetupCard = data::SetupCard { players: 2, cluster_out_of_play: vec![0,5], a_locations: vec![19,11], b_locations: vec![16, 17], c_locations: vec![2,4,14,15]};
         let game_state: data::GameState = board::setup_game(&test_setup);
 
         let origin_system = 16;
