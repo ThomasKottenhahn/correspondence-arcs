@@ -1,3 +1,4 @@
+use crate::board;
 use crate::board::update_control;
 use crate::data::GameState;
 use crate::data::Color;
@@ -8,7 +9,7 @@ use crate::data::Ships;
 use crate::data::System;
 use crate::data::BuildingSlot;
 
-fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot>{
+pub fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot> {
     if building_slots.len() == 0{
         panic!("No building slots available");
     }
@@ -27,7 +28,7 @@ fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) ->
     return building_slots.clone();
 }
 
-fn place_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships>{
+pub fn place_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships> {
     let mut new_ships: Vec<Ships> = vec![];
     for ships_struct in ships{
         if ships_struct.player == player {
@@ -42,13 +43,13 @@ fn place_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec
     return new_ships;
 }
 
-fn remove_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships>{
+fn remove_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships> {
     let mut new_ships: Vec<Ships> = vec![];
     for ships_struct in ships{
         if ships_struct.player == player {
             let mut ships_struct = ships_struct.clone();
-            ships_struct.fresh = ships_struct.fresh - fresh;
-            ships_struct.damaged = ships_struct.damaged - damaged;
+            ships_struct.fresh = ships_struct.fresh.checked_sub(fresh).expect("Tried to move more fresh ships than available");
+            ships_struct.damaged = ships_struct.damaged.checked_sub(damaged).expect("Tried to move more damaged ships than available");
             new_ships.push(ships_struct);
         } else {
             new_ships.push(ships_struct.clone());
@@ -62,7 +63,9 @@ pub fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -
 
     let current_player = game_state.current_player.clone();
     let system: System = game_state.systems[target_system as usize].clone();
-
+    
+    if !board::has_presence(&system, &current_player) {panic!("Cannot build in a System without presence")}
+    
     match system{
         System::Unused => panic!("System is unused"),
         System::Used {

@@ -55,7 +55,10 @@ pub struct Cluster {
 
 pub struct SetupCard {
     pub players: u8,
-    pub cluster_out_of_play: Vec<u8>
+    pub cluster_out_of_play: Vec<u8>,
+    pub a_locations: Vec<u8>,
+    pub b_locations: Vec<u8>,
+    pub c_loactions: Vec<u8>
 }
 
 #[derive(Clone, Debug)]
