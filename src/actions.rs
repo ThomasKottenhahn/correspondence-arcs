@@ -1,8 +1,10 @@
 use crate::board;
 use crate::board::update_control;
+use crate::data::ActionType;
 use crate::data::GameState;
 use crate::data::Color;
 use crate::data::Action;
+use crate::data::TurnState;
 use crate::data::BuildType;
 use crate::data::BuildingType;
 use crate::data::Ships;
@@ -169,10 +171,79 @@ pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_syst
     return game_state;
 }
 
+pub fn repair(game_state: &GameState, target_system: u8, build_type: BuildType) -> GameState {
+    let mut game_state = game_state.clone();
+    let system = game_state.systems[target_system as usize].clone();
+    let current_player = game_state.current_player.clone();
+    match system {
+        System::Unused => panic!("Cannot repair in unused System"),
+        System::Used {
+            system_id,
+            system_type,
+            mut building_slots,
+            ships,
+            controlled_by,
+            connects_to
+        } => match build_type {
+            BuildType::Ship => {
+                let ships = remove_ships(&ships, current_player.clone(), 0, 1);
+                let ships = place_ships(&ships, current_player.clone(), 1, 0);
+                game_state.systems[target_system as usize] = board::update_control(&System::Used {
+                    system_id: system_id,
+                    system_type: system_type,
+                    building_slots: building_slots,
+                    ships: ships,
+                    controlled_by: controlled_by,
+                    connects_to: connects_to
+                });
+            },
+            BuildType::City => {
+                match (building_slots[0].clone(), building_slots[1].clone()) {
+                    (BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::City }, _) => building_slots[0] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::City },
+                    (_, BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::City }) => building_slots[1] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::City },
+                    _ => panic!("Cannot repair, because no valid repair target exists")
+                }
+            },
+            BuildType::Starport => {
+                match (building_slots[0].clone(), building_slots[1].clone()) {
+                    (BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::Starport }, _) => building_slots[0] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::Starport },
+                    (_, BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::Starport }) => building_slots[1] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::Starport },
+                    _ => panic!("Cannot repair, because no valid repair target exists")
+                }
+            }
+        }
+    }
+    return game_state;
+}
+
 pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
-    return match action {
-        Action::Build {target_system, build_type} => build(game_state, target_system, build_type),
-        Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
-        _ => game_state.clone()
-    };
+    match &game_state.turn_state {
+        TurnState::TrickTaking => todo!(),
+        TurnState::Prelude => todo!(),
+        TurnState::Actions { action_type: ActionType::Administration, pips_left } => {
+            match action {
+                Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
+                Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+                _ => game_state.clone()
+            }
+        },
+        TurnState::Actions { action_type: ActionType::Agression, pips_left } => {
+            // TODO: Implement logic for Agression action type
+            game_state.clone()
+        },
+        TurnState::Actions { action_type: ActionType::Construction, pips_left } => {
+            if pips_left == 0 {panic!("No Action pips left")}
+            match action {
+                Action::Build {target_system, build_type} => build(game_state, target_system, build_type),
+                Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
+                _ => panic!("Cannot execute Action with Construction Action Card") 
+            }
+        },
+        TurnState::Actions { action_type: ActionType::Mobilization, pips_left } => {
+            // TODO: Implement logic for Mobilization action type
+            game_state.clone()
+        },
+        TurnState::AllocateResource { resource } => todo!(),
+        TurnState::AllocateDiceResults { target_system, opponent, self_hits, hits, building_hits, keys } => todo!(),
+    }
 }

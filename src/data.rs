@@ -75,15 +75,36 @@ pub enum CourtCard {
     Vox {
         title: String,
         description: String,
-        on_secure: fn(&GameState) -> GameState
+        on_secure: fn(&GameState, VoxPayload) -> GameState
     },
     Guild {
         title: String,
         description: String,
         resource: ResourceType,
         keys: u8,
-        prelude_action: fn(&GameState) -> GameState
+        prelude_action: fn(&GameState, PreludeActionPayload) -> GameState
     }
+}
+
+pub enum VoxPayload {
+    MassUprising {target_cluster: u8},
+    PopulistDemands {ambition: Option<AmbitionTypes>},
+    OutrageSpreads {outrage_type: Option<ResourceType>},
+    SongOfFreedom {target_system: Option<u8>, target_player: Option<Color>},
+    GuildStruggle {target_player: Option<Color>, target_card: Option<u8>},
+    CallToAction
+}
+
+pub enum PreludeActionPayload {
+    Interest {target_resource: ResourceType},
+    Steal {target_resource: ResourceType, target_player: ResourceType},
+    Union {card_type: ActionType},
+    PlaceShips {target_system: u8},
+    Farseers {cards: Vec<ActionCard>},
+    RelicFence {target_resource: ResourceType},
+    SilverTounges,
+    ElderBroker,
+    GateKeepers
 }
 
 #[derive(Clone, Debug)]
@@ -197,7 +218,9 @@ struct Ambition{
 pub enum TurnState {
     TrickTaking,
     Prelude,
-    Actions {action_type: ActionType, pips_left: u8}
+    Actions {action_type: ActionType, pips_left: u8},
+    AllocateResource {resource: ResourceType},
+    AllocateDiceResults {target_system: u8, opponent: Color, self_hits: u8, hits: u8, building_hits: u8, keys: u8}
 }
 
 #[derive(Clone, Debug)]
