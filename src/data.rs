@@ -24,7 +24,7 @@ pub enum BuildingType {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum BuildingSlot {
-    Occupied {fresh: bool, player: Color, building_type: BuildingType},
+    Occupied {fresh: bool, player: Color, building_type: BuildingType, used: bool},
     Empty
 }
 
@@ -146,13 +146,19 @@ pub enum Dice{
 
 #[derive(Clone, Debug)]
 pub enum Action{
+    PlayLeadCard {card: ActionCard, declare: Option<AmbitionTypes>},
+    Surpass {card: ActionCard, seize: bool},
+    Copy {card: ActionCard, seize: bool},
+    Pivot {card: ActionType, seize: bool},
     Build {target_system: u8, build_type: BuildType},
     Repair {target_system: u8, build_type: BuildType},
     Tax {target_system: u8, resource: ResourceType},
     Influence {card_id: u8},
     Move {origin_id: u8, destination_id: u8, fresh_ships: u8, damaged_ships: u8},
     Secure {card_id: u8},
-    Battle {target_system: u8, target_player: Color, dice: Vec<Dice>}
+    Battle {target_system: u8, target_player: Color, dice: Vec<Dice>},
+    EndPrelude,
+    Pass
 }
 
 #[derive(Clone, Debug)]
@@ -165,10 +171,10 @@ pub enum ActionType{
 
 #[derive(Clone, Debug)]
 pub struct ActionCard{
-    action_type: ActionType,
-    number: u8,
-    pips: u8,
-    declared_ambition: Option<AmbitionTypes>
+    pub action_type: ActionType,
+    pub number: u8,
+    pub pips: u8,
+    pub declared_ambition: Option<AmbitionTypes>
 }
 
 #[derive(Clone, Debug)]
@@ -208,7 +214,7 @@ pub enum AmbitionTypes {
 }
 
 #[derive(Clone, Debug)]
-struct Ambition{
+pub struct Ambition{
     ambition_type: AmbitionTypes,
     markers: Vec<AmbitionMarker>,
     discarded_resources: Vec<ResourceType>
@@ -217,7 +223,7 @@ struct Ambition{
 #[derive(Clone, Debug)]
 pub enum TurnState {
     TrickTaking,
-    Prelude,
+    Prelude {action_type: ActionType, pips_left: u8},
     Actions {action_type: ActionType, pips_left: u8},
     AllocateResource {resource: ResourceType},
     AllocateDiceResults {target_system: u8, opponent: Color, self_hits: u8, hits: u8, building_hits: u8, keys: u8}
@@ -227,6 +233,9 @@ pub enum TurnState {
 pub struct GameState {
     pub players: Vec<PlayerArea>,
     pub current_player: Color,
+    pub initiative: Color,
+    pub seized: bool,
+    pub zero_marker: bool,
     pub turn_state: TurnState,
     pub chapter: u8,
     pub systems: Vec<System>,

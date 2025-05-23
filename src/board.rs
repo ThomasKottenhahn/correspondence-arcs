@@ -143,7 +143,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
                 } => *system = System::Used { 
                     system_id: *system_id,
                     system_type: system_type.clone(),
-                    building_slots: place_building(&building_slots, data::BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: data::BuildingType::City }),
+                    building_slots: place_building(&building_slots, data::BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: data::BuildingType::City , used: false}),
                     ships: place_ships(&ships, color.clone(), 3, 0),
                     controlled_by: controlled_by.clone(),
                     connects_to: connects_to.to_vec()
@@ -172,7 +172,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
                 } => *system = System::Used { 
                     system_id: *system_id,
                     system_type: system_type.clone(),
-                    building_slots: place_building(&building_slots, data::BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: data::BuildingType::Starport }),
+                    building_slots: place_building(&building_slots, data::BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: data::BuildingType::Starport , used: false}),
                     ships: place_ships(&ships, color.clone(), 3, 0),
                     controlled_by: controlled_by.clone(),
                     connects_to: connects_to.to_vec()
@@ -181,11 +181,6 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
             };
             acc
         });
-
-    println!("{:?}", setup_card
-        .c_locations
-        .iter()
-        .zip(all_colors.iter().chain(&all_colors)).collect::<Vec<_>>());
 
     let systems = setup_card
         .c_locations
@@ -223,6 +218,9 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         players: players,
         current_player: Color::Red,
         turn_state: TurnState::TrickTaking,
+        initiative: Color::Red,
+        seized: false,
+        zero_marker: false,
         chapter: 1,
         systems: systems,
         court: vec![],

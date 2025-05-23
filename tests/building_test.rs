@@ -13,7 +13,11 @@ mod test{
         let target_system = 17;
         let build_type = data::BuildType::Ship;
 
-        let new_game_state = actions::build(&game_state, target_system, build_type);
+        let new_game_state = actions::execute_actions(&game_state, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Build { target_system: target_system, build_type: build_type }
+        ]);
 
         match &new_game_state.systems[target_system as usize] {
             data::System::Used {ships, controlled_by, ..} => {
@@ -32,7 +36,11 @@ mod test{
         let target_system = 17;
         let build_type = data::BuildType::Ship;
 
-        let new_game_state = actions::execute_action(&game_state, data::Action::Build{target_system, build_type});
+        let new_game_state = actions::execute_actions(&game_state, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Build { target_system: target_system, build_type: build_type }
+        ]);
 
         match &new_game_state.systems[target_system as usize] {
             data::System::Used {ships, controlled_by, ..} => {
@@ -51,12 +59,17 @@ mod test{
         let target_system = 16;
         let build_type = data::BuildType::City;
 
-        let g1 = actions::execute_action(&game_state,data::Action::Move { origin_id: 17, destination_id: 16, fresh_ships: 2, damaged_ships: 0 });
-        let new_game_state = actions::execute_action(&g1, data::Action::Build{target_system, build_type});
+        let game_state = actions::move_ships(&game_state, 17, 16, 2, 0);
+
+        let new_game_state = actions::execute_actions(&game_state, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Build { target_system: target_system, build_type: build_type }
+        ]);      
 
         match &new_game_state.systems[target_system as usize] {
             data::System::Used {building_slots, controlled_by, ..} => {
-                assert_eq!(building_slots, &vec![data::BuildingSlot::Occupied { fresh: true, player: data::Color::Red, building_type: data::BuildingType::City}, data::BuildingSlot::Empty]);
+                assert_eq!(building_slots, &vec![data::BuildingSlot::Occupied { fresh: true, player: data::Color::Red, building_type: data::BuildingType::City, used: false}, data::BuildingSlot::Empty]);
                 assert_eq!(controlled_by, &Some(data::Color::Red));
             }
             _ => panic!("Expected Used system variant")
@@ -71,14 +84,19 @@ mod test{
         let target_system: u8 = 15;
         let build_type = data::BuildType::Starport;
 
-        let g1 = actions::execute_action(&game_state,data::Action::Move { origin_id: 17, destination_id: 16, fresh_ships: 2, damaged_ships: 0 });
-        let g2 = actions::execute_action(&g1,data::Action::Move { origin_id: 16, destination_id: 15, fresh_ships: 2, damaged_ships: 0 });
-        let new_game_state = actions::execute_action(&g2, data::Action::Build{target_system, build_type});
+        let g1 = actions::move_ships(&game_state,17, 16, 2, 0);
+        let g2 = actions::move_ships(&g1,16,15, 2, 0);
+        
+        let new_game_state = actions::execute_actions(&g2, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Build { target_system: target_system, build_type: build_type }
+        ]);
 
         match &new_game_state.systems[target_system as usize] {
             data::System::Used {building_slots, controlled_by, ..} => {
-                assert_eq!(building_slots, &vec![data::BuildingSlot::Occupied { fresh: true, player: data::Color::Red, building_type: data::BuildingType::Starport}, data::BuildingSlot::Empty]);
-                //Shoulf be controlled by no one, because of two blue ships
+                assert_eq!(building_slots, &vec![data::BuildingSlot::Occupied { fresh: true, player: data::Color::Red, building_type: data::BuildingType::Starport, used: false}, data::BuildingSlot::Empty]);
+                //Should be controlled by no one, because of two blue ships
                 assert_eq!(controlled_by, &None);
             }
             _ => panic!("Expected Used system variant")
@@ -94,8 +112,12 @@ mod test{
         let target_system = 3;
         let build_type = data::BuildType::Starport;
 
-        let g1 = actions::execute_action(&game_state,data::Action::Move { origin_id: 17, destination_id: 3, fresh_ships: 2, damaged_ships: 0 });
-        let _ = actions::execute_action(&g1, data::Action::Build{target_system, build_type});
+        let g1 = actions::move_ships(&game_state, 17, 3, 2, 0);
+        let _ = actions::execute_actions(&g1, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Build { target_system: target_system, build_type: build_type }
+        ]);
     }
 
     #[test]
@@ -107,7 +129,10 @@ mod test{
         let target_system = 17;
         let build_type = data::BuildType::Starport;
 
-        print!("{:?}", game_state.systems[17]);
-        let _ = actions::execute_action(&game_state, data::Action::Build{target_system, build_type: build_type.clone()});
+        let _ = actions::execute_actions(&game_state, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Build { target_system: target_system, build_type: build_type }
+        ]);
     }
 }

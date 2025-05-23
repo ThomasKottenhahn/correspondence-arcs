@@ -93,7 +93,7 @@ pub fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -
                     connects_to: connects_to.clone() }
                 ),
                 BuildType::City => {
-                    let building = BuildingSlot::Occupied {fresh: build_fresh, player: current_player, building_type: BuildingType::City};
+                    let building = BuildingSlot::Occupied {fresh: build_fresh, player: current_player, building_type: BuildingType::City, used: false};
                     game_state.systems[target_system as usize] = System::Used {
                     system_id: system_id, 
                     system_type: system_type.clone(), 
@@ -103,7 +103,7 @@ pub fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -
                     connects_to: connects_to.clone() }
                 },   
                 BuildType::Starport => {
-                    let building = BuildingSlot::Occupied {fresh: build_fresh, player: current_player, building_type: BuildingType::Starport};
+                    let building = BuildingSlot::Occupied {fresh: build_fresh, player: current_player, building_type: BuildingType::Starport, used: false};
                     game_state.systems[target_system as usize] = System::Used {
                     system_id: system_id, 
                     system_type: system_type.clone(), 
@@ -199,15 +199,15 @@ pub fn repair(game_state: &GameState, target_system: u8, build_type: BuildType) 
             },
             BuildType::City => {
                 match (building_slots[0].clone(), building_slots[1].clone()) {
-                    (BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::City }, _) => building_slots[0] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::City },
-                    (_, BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::City }) => building_slots[1] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::City },
+                    (BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::City, used }, _) => building_slots[0] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::City, used },
+                    (_, BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::City, used }) => building_slots[1] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::City, used },
                     _ => panic!("Cannot repair, because no valid repair target exists")
                 }
             },
             BuildType::Starport => {
                 match (building_slots[0].clone(), building_slots[1].clone()) {
-                    (BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::Starport }, _) => building_slots[0] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::Starport },
-                    (_, BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::Starport }) => building_slots[1] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::Starport },
+                    (BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::Starport, used }, _) => building_slots[0] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::Starport, used },
+                    (_, BuildingSlot::Occupied { fresh: false, player: current_player, building_type: BuildingType::Starport, used }) => building_slots[1] = BuildingSlot::Occupied { fresh: true, player: current_player, building_type: BuildingType::Starport, used },
                     _ => panic!("Cannot repair, because no valid repair target exists")
                 }
             }
@@ -216,23 +216,58 @@ pub fn repair(game_state: &GameState, target_system: u8, build_type: BuildType) 
     return game_state;
 }
 
+pub fn execute_actions(game_state: &GameState, actions: Vec<Action>) -> GameState{
+    return actions
+        .iter()
+        .fold(game_state.clone(), |g, action| execute_action(&g, action.clone()));
+}
+
 pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
     match &game_state.turn_state {
-        TurnState::TrickTaking => todo!(),
-        TurnState::Prelude => todo!(),
+        TurnState::TrickTaking => {
+            match action {
+                Action::PlayLeadCard { card, declare } => {
+                    let mut new_game_state = game_state.clone();
+                    new_game_state.lead_card = Some(card.clone());
+                    match declare {
+                        Some(_) => todo!(),
+                        None => {},
+                    }
+                    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
+                    return new_game_state;
+                },
+                Action::Surpass { card, seize } => todo!(),
+                Action::Copy { card, seize } => todo!(),
+                Action::Pivot { card, seize } => todo!(),
+                _ => panic!("Can only Execute TrickTaking Actions")
+            }
+        },
+        TurnState::Prelude { action_type, pips_left } => {
+            match action {
+                Action::EndPrelude => {
+                    let mut new_game_state = game_state.clone();
+                    new_game_state.turn_state = TurnState::Actions { action_type: action_type.clone(), pips_left: pips_left.clone() };
+                    return new_game_state;
+                },
+                _ => todo!()
+            }
+        },
         TurnState::Actions { action_type: ActionType::Administration, pips_left } => {
+            if *pips_left == 0 {panic!("No Action pips left")}
             match action {
                 Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
-                Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
                 _ => game_state.clone()
             }
         },
         TurnState::Actions { action_type: ActionType::Agression, pips_left } => {
-            // TODO: Implement logic for Agression action type
-            game_state.clone()
+            if *pips_left == 0 {panic!("No Action pips left")}
+            match action {
+                Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+                _ => game_state.clone()   
+            }
         },
         TurnState::Actions { action_type: ActionType::Construction, pips_left } => {
-            if pips_left == 0 {panic!("No Action pips left")}
+            if *pips_left == 0 {panic!("No Action pips left")}
             match action {
                 Action::Build {target_system, build_type} => build(game_state, target_system, build_type),
                 Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
@@ -240,8 +275,12 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
             }
         },
         TurnState::Actions { action_type: ActionType::Mobilization, pips_left } => {
+            if *pips_left == 0 {panic!("No Action pips left")}
+            match action {
+                Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+                _ => game_state.clone()
+            }
             // TODO: Implement logic for Mobilization action type
-            game_state.clone()
         },
         TurnState::AllocateResource { resource } => todo!(),
         TurnState::AllocateDiceResults { target_system, opponent, self_hits, hits, building_hits, keys } => todo!(),

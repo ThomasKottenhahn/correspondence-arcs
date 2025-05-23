@@ -12,7 +12,11 @@ mod test {
         let origin_system = 16;
         let destination_system = 3;
 
-        let new_game_state = actions::execute_action(&game_state, data::Action::Move { origin_id: origin_system, destination_id: destination_system, fresh_ships: 1, damaged_ships: 0});
+        let new_game_state = actions::execute_actions(&game_state, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Move { origin_id: origin_system, destination_id: destination_system, fresh_ships: 1, damaged_ships: 0 }
+        ]);
 
         match &new_game_state.systems[origin_system as usize] {
             data::System::Used {ships, controlled_by, ..} => {
@@ -40,7 +44,11 @@ mod test {
         let origin_system = 16;
         let destination_system = 3;
 
-        let new_game_state = actions::execute_action(&game_state, data::Action::Move { origin_id: origin_system, destination_id: destination_system, fresh_ships: 3, damaged_ships: 0});
+        let new_game_state = actions::execute_actions(&game_state, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Move { origin_id: origin_system, destination_id: destination_system, fresh_ships: 3, damaged_ships: 0 }
+        ]);
 
         match &new_game_state.systems[origin_system as usize] {
             data::System::Used {ships, controlled_by, ..} => {
