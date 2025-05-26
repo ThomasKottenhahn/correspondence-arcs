@@ -103,9 +103,6 @@ fn setup_player_area(player_color: &Color) -> PlayerArea {
         player: player_color.clone(),
         initiative: false,
         action_cards: vec![],
-        controlled_systems: vec![],
-        controlled_ships: vec![],
-        controlled_buildings: vec![],
         guild_cards: vec![],
         reserve_ships: 15,
         reserve_agents: 10,
@@ -211,13 +208,14 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
             acc
         });
 
-    let systems = systems.iter().map(|s| update_control(s)).collect();
+    let systems = systems.iter().map(|s| s.update_control()).collect();
 
 
     return GameState{
         players: players,
         current_player: Color::Red,
         turn_state: TurnState::TrickTaking,
+        next_turn_state: None,
         initiative: Color::Red,
         seized: false,
         zero_marker: false,
@@ -230,54 +228,4 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         lead_card: None,
         follow_cards: vec![]        
     };
-}
-
-pub fn update_control(system: &System) -> System {
-    match system {
-        System::Unused => system.clone(),
-        System::Used {
-            system_id,
-            system_type,
-            building_slots,
-            ships,
-            connects_to, ..
-        } => {
-            let new_controlled_by = {
-                if ships.len() == 0 {
-                    None
-                } else {
-                    let mut player = ships[0].player.clone();
-                    let mut most = ships[0].fresh.clone();
-                    for i in 1..ships.len() {
-                        if ships[i].fresh > most {
-                            player = ships[i].player.clone();
-                            most = ships[i].fresh.clone();
-                        } else if ships[i].fresh == most {
-                            player = Color::None;
-                        }
-                    }
-                    if player == Color::None {
-                        None
-                    } else {
-                        Some(player.clone())
-                    }
-                }
-            };
-            return System::Used {
-                system_id: system_id.clone(),
-                system_type: system_type.clone(),
-                building_slots: building_slots.clone(),
-                ships: ships.clone(),
-                controlled_by: new_controlled_by,
-                connects_to: connects_to.clone()
-            };
-        }
-    }
-}
-
-pub fn has_presence(system: &System, player_color: &Color) -> bool {
-    match system {
-        System::Unused => false,
-        System::Used {ships, ..} => ships.clone().iter().filter(|x| x.player==*player_color && (x.fresh > 0 || x.damaged > 0)).count() == 1
-    }
 }
