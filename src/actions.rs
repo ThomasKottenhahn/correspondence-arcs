@@ -275,9 +275,8 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
                     .filter(|a| a.color != current_player)
                     .map(|a| Trophy{trophy_type: TrophyType::Agent, count: a.count, player: a.color.clone()})
                     .collect();
-                let new_player_area = new_game_state.get_player_area(&current_player).add_trophies(tropies);
-                let player_area_index = new_game_state.get_player_area_ind(&current_player) as usize;
-                new_game_state.players[player_area_index] = new_player_area;
+                let mut current_player_area = new_game_state.get_player_area(&current_player);
+                current_player_area.add_trophies(tropies);
 
                 return (vox.on_secure)(&new_game_state, vox_payload.expect("VoxPayload required"));
             },
@@ -286,15 +285,78 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
                     .filter(|a| a.color != current_player)
                     .map(|a| Trophy{trophy_type: TrophyType::Agent, count: a.count, player: a.color.clone()})
                     .collect();
-                let mut new_player_area = new_game_state.get_player_area(&current_player).add_trophies(tropies);
-                let player_area_index = new_game_state.get_player_area_ind(&current_player) as usize;
-                new_player_area.guild_cards.push(guild);
-                new_game_state.players[player_area_index] = new_player_area;
+                let mut current_player_area = new_game_state.get_player_area(&current_player);
+                current_player_area.add_trophies(tropies);
+                current_player_area.guild_cards.push(guild);
                 return new_game_state;
             },
         }
     }
     else {panic!("Can only secure controlled Card")};
+}
+
+fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameState {
+    let system = &game_state.systems[target_system as usize];
+    let unused_building = system.has_unused_building(BuildingType::City, &target_player);
+    let tax_rival = target_player != game_state.current_player;
+
+    let mut new_game_state =  game_state.clone();
+
+    match (system, unused_building) {
+        (System::Unused, _) => panic!("Cannot tax Unused System"),
+        (System::Used { .. }, None) => panic!("No unused Building available"),
+        (System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to }, Some(ind)) => {
+            if tax_rival {
+                if controlled_by != &Some(game_state.current_player.clone()) {
+                    panic!("Cannot tax a rival in a System controlled by another player");
+                }
+                let mut rivals_play_area = new_game_state.get_player_area(&target_player);
+                rivals_play_area.reserve_agents -= 1;
+                let mut current_player_area = new_game_state.get_player_area(&game_state.current_player);
+                current_player_area.add_trophies(vec![Trophy {
+                    trophy_type: TrophyType::Agent,
+                    count: 1,
+                    player: target_player.clone(),
+                }]);
+            }
+            new_game_state.systems[target_system as usize] = System::Used { 
+                system_id: *system_id,
+                system_type: system_type.clone(),
+                building_slots: building_slots.iter().enumerate().map(|(i, b)| {
+                    if i == ind.into() {
+                        match b {
+                            BuildingSlot::Occupied { fresh, player, building_type, .. } => BuildingSlot::Occupied {
+                                fresh: *fresh,
+                                player: player.clone(),
+                                building_type: building_type.clone(),
+                                used: true
+                            },
+                            _ => b.clone()
+                        }
+                    } else {
+                        b.clone()
+                    }
+                }).collect(),
+                ships: ships.clone(),
+                controlled_by: controlled_by.clone(),
+                connects_to: connects_to.clone() };
+            
+            let taxed_resource = match system_type {
+                crate::data::SystemType::Gate => panic!("Cannot tax Gate System"),
+                crate::data::SystemType::Planet { resource } => resource.clone(),
+            };
+
+            let resource_count = new_game_state.resource_reserve.get(&taxed_resource).expect("No Resource in Reserve").clone();
+            new_game_state.resource_reserve.remove(&taxed_resource);
+            if resource_count > 0{
+                new_game_state.resource_reserve.insert(taxed_resource.clone(), resource_count - 1);
+                new_game_state.next_turn_state = Some(new_game_state.turn_state.clone());
+                new_game_state.turn_state = TurnState::AllocateResource { resource: taxed_resource };
+            }
+        }
+
+    }
+    new_game_state
 }
 
 pub fn execute_actions(game_state: &GameState, actions: Vec<Action>) -> GameState {
@@ -338,7 +400,7 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
             match action_type {
                 ActionType::Administration => match action {
                 Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
-                Action::Tax { target_system, resource } => todo!(),
+                Action::Tax { target_system, target_player } => tax(game_state, target_system, target_player),
                 Action::Influence { card_id } => influence(game_state, card_id),
                 _ => panic!("Cannot execute Action with Administration Action Card")
             },

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Color {
     None,
@@ -102,6 +104,28 @@ impl System{
             }
         }
     }
+
+    pub fn has_unused_building(self:&System, building_type: BuildingType, color: &Color) -> Option<u8> {
+        match self {
+            System::Unused => None,
+            System::Used { building_slots, .. } => building_slots
+            .iter()
+            .enumerate()
+            .find_map(|(idx, b)| {
+                match b {
+                BuildingSlot::Occupied { fresh, player, building_type: b_type, used } => {
+                    if *fresh && player == color && *b_type == building_type && !*used {
+                    Some(idx as u8)
+                    } else {
+                    None
+                    }
+                }
+                BuildingSlot::Empty => None,
+                }
+            })
+        }
+    }
+
 }
 
 #[derive(Clone, Debug)]
@@ -118,7 +142,7 @@ pub struct SetupCard {
     pub c_locations: Vec<u8>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ResourceType {
     Fuel,
     Material,
@@ -242,7 +266,7 @@ pub enum Action{
     Pivot {card: ActionType, seize: bool},
     Build {target_system: u8, build_type: BuildType},
     Repair {target_system: u8, build_type: BuildType},
-    Tax {target_system: u8, resource: ResourceType},
+    Tax {target_system: u8, target_player: Color},
     Influence {card_id: u8},
     Move {origin_id: u8, destination_id: u8, fresh_ships: u8, damaged_ships: u8},
     Secure {card_id: u8, vox_payload: Option<VoxPayload>},
@@ -283,7 +307,7 @@ pub struct PlayerArea {
 }
 
 impl PlayerArea {
-    pub fn add_trophies(&self, tropies: Vec<Trophy>) -> PlayerArea {
+    pub fn add_trophies(& mut self, tropies: Vec<Trophy>){
         let combined = tropies.iter().fold(self.tropies.clone(), {
             |mut acc, trophy| {
                 if let Some(existing) = acc.iter_mut().find(|t| t.trophy_type == trophy.trophy_type && t.player == trophy.player) {
@@ -294,10 +318,7 @@ impl PlayerArea {
                 acc
             }
         });
-        PlayerArea {
-            tropies: combined,
-            ..self.clone()
-        }
+        self.tropies = combined;
     }
 }
 
@@ -346,6 +367,7 @@ pub struct GameState {
     pub next_turn_state: Option<TurnState>,
     pub chapter: u8,
     pub systems: Vec<System>,
+    pub resource_reserve: HashMap<ResourceType, u8>,
     pub court: Vec<CourtCard>,
     pub court_draw_pile: Vec<CourtCard>,
     pub court_discard_pile: Vec<CourtCard>,

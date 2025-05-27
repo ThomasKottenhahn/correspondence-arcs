@@ -1,3 +1,5 @@
+use std::collections::hash_map;
+
 use crate::data;
 use crate::data::GameState;
 use crate::data::PlayerArea;
@@ -210,6 +212,10 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
 
     let systems = systems.iter().map(|s| s.update_control()).collect();
 
+    let mut resource_reserve: hash_map::HashMap<ResourceType, u8> = hash_map::HashMap::new();
+    for (key, value) in vec![ResourceType::Weapons, ResourceType::Fuel, ResourceType::Material, ResourceType::Psionics, ResourceType::Relics].iter().map(|x| (x.clone(), 5 as u8)) {
+        resource_reserve.insert(key.clone(), value);
+    }
 
     return GameState{
         players: players,
@@ -221,6 +227,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         zero_marker: false,
         chapter: 1,
         systems: systems,
+        resource_reserve: resource_reserve,
         court: vec![],
         court_discard_pile: vec![],
         court_draw_pile: vec![],
