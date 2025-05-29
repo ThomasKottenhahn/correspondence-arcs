@@ -1,16 +1,7 @@
 use std::collections::hash_map;
 
 use crate::data;
-use crate::data::GameState;
-use crate::data::PlayerArea;
-use crate::data::Ships;
-use crate::data::TurnState;
-use crate::data::SetupCard;
-use crate::data::System;
-use crate::data::Color;
-use crate::data::SystemType;
-use crate::data::BuildingSlot;
-use crate::data::ResourceType;
+use crate::data::{GameState,PlayerArea,Ships,TurnState,SetupCard,System,Color,SystemType,BuildingSlot,ResourceType};
 
 use crate::actions::place_ships;
 use crate::actions::place_building;
@@ -80,8 +71,8 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
                 if i/3 == (i+1)/3 {connections.push((i+7) as u8)}
                 
                 // Special Borders
-                if (i == 5 || i == 14) && !setup_card.cluster_out_of_play.contains(&((i/3)as u8)) {connections.push((i+7) as u8)}
-                if (i == 6 || i == 15) && !setup_card.cluster_out_of_play.contains(&((i/3)as u8)) {connections.push((i+5) as u8)}
+                if (i == 5 || i == 14) && !setup_card.cluster_out_of_play.contains(&(((i+1)/3)as u8)) {connections.push((i+7) as u8)}
+                if (i == 6 || i == 15) && !setup_card.cluster_out_of_play.contains(&(((i-1)/3)as u8)) {connections.push((i+5) as u8)}
                 
                 System::Used {
                     system_id: (6+i) as u8,

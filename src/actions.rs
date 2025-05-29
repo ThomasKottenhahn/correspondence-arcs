@@ -1,3 +1,5 @@
+use core::panic;
+
 use rand::Rng;
 
 use crate::data::ActionType;
@@ -140,6 +142,7 @@ pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_syst
             controlled_by,
             connects_to
         } => {
+            if !connects_to.contains(&destination_system_id) {panic!("Destination not connected to Origin")}
             let updated_ships = remove_ships(&ships, game_state.current_player.clone(), fresh, damaged);
             game_state.systems[origin_system_id as usize] = System::Used {
                 system_id,
@@ -240,6 +243,13 @@ fn influence(game_state: &GameState, target_card: u8) -> GameState {
 
 fn battle(game_state: &GameState, target_system: u8, target_player: Color, dice: Vec<Dice>) -> GameState {
     let mut rng = rand::thread_rng();
+
+    let battle_system = &game_state.systems[target_system as usize];
+    let current_player = &game_state.current_player;
+
+    if dice.len() > battle_system.get_all_ships(current_player).into() {panic!("Cannot roll more dice than ships present")};
+    if !battle_system.has_presence(&target_player) {panic!("Cannot battle {:?} in System without presence.", target_player)}
+
     let (self_hits, intecept, hits, building_hits, keys) = dice.iter().map(|d| {
         let faces: Vec<(u8, u8, u8, u8, u8)> = match d {
             Dice::Skirmish => vec![(0,0,1,0,0), (0,0,1,0,0), (0,0,1,0,0), (0,0,0,0,0), (0,0,0,0,0), (0,0,0,0,0)],
@@ -266,7 +276,7 @@ fn battle(game_state: &GameState, target_system: u8, target_player: Color, dice:
 fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayload>) -> GameState {
     let current_player = game_state.current_player.clone();
     let card = game_state.court[target_card as usize].clone();
-    let mut new_game_state = game_state.clone();
+    let new_game_state = game_state.clone();
     
     if card.controlled_by() == Some(current_player.clone()) {
         match card {

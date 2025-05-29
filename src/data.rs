@@ -30,7 +30,7 @@ pub enum BuildingSlot {
     Empty
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SystemType{
     Gate,
     Planet {resource: ResourceType}
@@ -101,6 +101,18 @@ impl System{
                     .iter()
                     .find(|s| s.player == *color)
                     .map_or(0, |s| s.fresh)
+            }
+        }
+    }
+
+    pub fn get_all_ships(self:&System, color: &Color) -> u8 {
+        match self {
+            System::Unused => 0,
+            System::Used { ships, .. } => {
+                ships
+                    .iter()
+                    .find(|s| s.player == *color)
+                    .map_or(0, |s| s.fresh + s.damaged)
             }
         }
     }
@@ -275,7 +287,7 @@ pub enum Action{
     Pass
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ActionType{
     Administration,
     Agression,
@@ -347,7 +359,7 @@ pub struct Ambition{
     discarded_resources: Vec<ResourceType>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TurnState {
     TrickTaking,
     Prelude {action_type: ActionType, pips_left: u8},

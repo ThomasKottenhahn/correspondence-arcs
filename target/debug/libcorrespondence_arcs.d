@@ -1,1 +1,0 @@
-C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\target\debug\libcorrespondence_arcs.rlib: C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\actions.rs C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\board.rs C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\data.rs C:\Users\Thoma\OneDrive\ -\ JGU\correspondence-arcs\src\lib.rs

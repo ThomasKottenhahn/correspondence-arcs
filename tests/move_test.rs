@@ -3,13 +3,14 @@ mod test {
     use correspondence_arcs::data;
     use correspondence_arcs::board;
     use correspondence_arcs::actions;
+    use correspondence_arcs::setup_cards::two_player_frontiers;
 
     #[test]
     fn move_1_ship() {
-        let test_setup: data::SetupCard = data::SetupCard { players: 2, cluster_out_of_play: vec![0,5], a_locations: vec![19,11], b_locations: vec![16, 17], c_locations: vec![2,4,14,15]};
+        let test_setup: data::SetupCard = two_player_frontiers();
         let game_state: data::GameState = board::setup_game(&test_setup);
 
-        let origin_system = 16;
+        let origin_system = 17;
         let destination_system = 3;
 
         let new_game_state = actions::execute_actions(&game_state, vec![
@@ -38,11 +39,11 @@ mod test {
 
     #[test]
     fn move_all_ships() {
-        let test_setup: data::SetupCard = data::SetupCard { players: 2, cluster_out_of_play: vec![0,5], a_locations: vec![19,11], b_locations: vec![16, 17], c_locations: vec![2,4,14,15]};
+        let test_setup: data::SetupCard = two_player_frontiers();
         let game_state: data::GameState = board::setup_game(&test_setup);
 
-        let origin_system = 16;
-        let destination_system = 3;
+        let origin_system = 17;
+        let destination_system = 16;
 
         let new_game_state = actions::execute_actions(&game_state, vec![
             data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
@@ -66,6 +67,22 @@ mod test {
             _ => panic!("Expected Used System Variant")
         }
 
+    }
+
+    #[test]
+    #[should_panic(expected = "Destination not connected to Origin")]
+    fn move_to_non_adjacent_system(){
+        let test_setup: data::SetupCard = two_player_frontiers();
+        let game_state: data::GameState = board::setup_game(&test_setup);
+
+        let origin_system = 17;
+        let destination_system = 18;
+
+        let _ = actions::execute_actions(&game_state, vec![
+            data::Action::PlayLeadCard { card: data::ActionCard { action_type: data::ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(data::AmbitionTypes::Tycoon) }, declare: None },
+            data::Action::EndPrelude,
+            data::Action::Move { origin_id: origin_system, destination_id: destination_system, fresh_ships: 3, damaged_ships: 0 }
+        ]);
     }
 
 }

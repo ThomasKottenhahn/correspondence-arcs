@@ -1,2 +1,0 @@
-Zip<core::slice::iter::Iter<'_, u8>, iter::adapters::chain::Chain<core::slice::iter::Iter<'_, Color>, core::slice::iter::Iter<'_, Color>>>
-Zip<std::slice::Iter<'_, u8>, std::iter::Chain<std::slice::Iter<'_, Color>, std::slice::Iter<'_, Color>>>
