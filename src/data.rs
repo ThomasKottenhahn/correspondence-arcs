@@ -273,9 +273,11 @@ pub enum Dice{
 #[derive(Clone, Debug)]
 pub enum Action{
     PlayLeadCard {card: ActionCard, declare: Option<AmbitionTypes>},
-    Surpass {card: ActionCard, seize: bool},
-    Copy {card: ActionCard, seize: bool},
-    Pivot {card: ActionType, seize: bool},
+    Pass,
+    Surpass {card: ActionCard, seize: Option<ActionCard>},
+    Copy {card: ActionCard, seize: Option<ActionCard>},
+    Pivot {card: ActionCard, seize: Option<ActionCard>},
+    EndPrelude,
     Build {target_system: u8, build_type: BuildType},
     Repair {target_system: u8, build_type: BuildType},
     Tax {target_system: u8, target_player: Color},
@@ -283,8 +285,7 @@ pub enum Action{
     Move {origin_id: u8, destination_id: u8, fresh_ships: u8, damaged_ships: u8},
     Secure {card_id: u8, vox_payload: Option<VoxPayload>},
     Battle {target_system: u8, target_player: Color, dice: Vec<Dice>},
-    EndPrelude,
-    Pass
+    EndTurn
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -373,7 +374,7 @@ pub struct GameState {
     pub players: Vec<PlayerArea>,
     pub current_player: Color,
     pub initiative: Color,
-    pub seized: bool,
+    pub seized: Option<Color>,
     pub zero_marker: bool,
     pub turn_state: TurnState,
     pub next_turn_state: Option<TurnState>,

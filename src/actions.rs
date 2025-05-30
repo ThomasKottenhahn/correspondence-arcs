@@ -2,22 +2,7 @@ use core::panic;
 
 use rand::Rng;
 
-use crate::data::ActionType;
-use crate::data::Agents;
-use crate::data::Dice;
-use crate::data::GameState;
-use crate::data::Color;
-use crate::data::Action;
-use crate::data::Trophy;
-use crate::data::TrophyType;
-use crate::data::TurnState;
-use crate::data::BuildType;
-use crate::data::BuildingType;
-use crate::data::Ships;
-use crate::data::System;
-use crate::data::BuildingSlot;
-use crate::data::CourtCard;
-use crate::data::VoxPayload;
+use crate::data::{ActionType, Agents, Dice, GameState, Color, Action, Trophy, TrophyType, TurnState, BuildType, BuildingType, Ships, System,BuildingSlot, CourtCard, VoxPayload};
 
 pub fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot> {
     if building_slots.len() == 0{
@@ -369,6 +354,38 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
     new_game_state
 }
 
+fn end_chapter(game_state: &GameState) -> GameState {
+    //Evaluate Ambitions
+    game_state.clone()
+}
+
+fn end_round(game_state: &GameState) -> GameState {
+    //determine new Initiative, discard Cards
+    let mut new_game_state = game_state.clone();
+    new_game_state.current_player =  match new_game_state.seized {
+        Some(c) => c,
+        None => {
+            let lead = game_state.lead_card.as_ref().unwrap();
+            //Who played this card?
+            //game_state.follow_cards.iter().chain(vec![lead]).filter(|c| c.action_type == lead.action_type).max_by(|c| c.number)
+        }
+    };
+
+    game_state.clone()
+}
+
+fn end_turn(game_state: &GameState) -> GameState {
+    // last player in Turn Order
+    if 1 + game_state.follow_cards.len() == game_state.players.iter().filter(|a| a.action_cards.len() != 0).count() {
+        return end_round(game_state);
+    }
+    //Otherwise next players Turn
+    let player_order: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow].iter().take(game_state.players.len()).cloned().collect();
+    let mut new_game_state = game_state.clone();
+    new_game_state.current_player = player_order[player_order.iter().position(|c| *c == new_game_state.current_player).unwrap() + 1].clone();
+    game_state.clone()
+}
+
 pub fn execute_actions(game_state: &GameState, actions: Vec<Action>) -> GameState {
     return actions
         .iter()
@@ -387,11 +404,41 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                         None => {},
                     }
                     new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
-                    return new_game_state;
+                    new_game_state
                 },
-                Action::Surpass { card, seize } => todo!(),
-                Action::Copy { card, seize } => todo!(),
-                Action::Pivot { card, seize } => todo!(),
+                Action::Surpass { card, seize } => {
+                    if card.action_type != game_state.lead_card.as_ref().unwrap().action_type {panic!("Cannot surpass with other card type")}
+                    if card.number < game_state.lead_card.as_ref().unwrap().number {panic!("Cannot surpass with a lower card")};
+                    let mut new_game_state = game_state.clone();
+                    new_game_state.follow_cards.push(card.clone());
+                    match seize {
+                        Some(_) => todo!(),
+                        None => {},
+                    }
+                    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
+                    new_game_state
+                },
+                Action::Copy { card, seize } => {
+                    let mut new_game_state = game_state.clone();
+                    new_game_state.follow_cards.push(card.clone());
+                    match seize {
+                        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
+                        None => {},
+                    }
+                    new_game_state.turn_state = TurnState::Prelude { action_type: new_game_state.lead_card.as_ref().unwrap().action_type.clone(), pips_left: 1 };
+                    new_game_state
+                },
+                Action::Pivot { card, seize } => {
+                    if card.action_type == game_state.lead_card.as_ref().unwrap().action_type {panic!("Cannot Pivot with same card type")};
+                    let mut new_game_state = game_state.clone();
+                    new_game_state.follow_cards.push(card.clone());
+                    match seize {
+                        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
+                        None => {},
+                    }
+                    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: 1 };
+                    new_game_state
+                },
                 _ => panic!("Can only Execute TrickTaking Actions")
             }
         },
@@ -429,7 +476,7 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                 Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
                 Action::Influence { card_id } => influence(game_state, card_id),
                 _ => panic!("Cannot execute Action with Mobilization Action Card")
-            },
+            }
             }
         },
         TurnState::AllocateResource { resource } => todo!(),

@@ -214,7 +214,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         turn_state: TurnState::TrickTaking,
         next_turn_state: None,
         initiative: Color::Red,
-        seized: false,
+        seized: None,
         zero_marker: false,
         chapter: 1,
         systems: systems,
