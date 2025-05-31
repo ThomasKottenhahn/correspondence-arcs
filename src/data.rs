@@ -385,8 +385,8 @@ pub struct GameState {
     pub court_draw_pile: Vec<CourtCard>,
     pub court_discard_pile: Vec<CourtCard>,
     pub action_discard: Vec<ActionCard>,
-    pub lead_card: Option<ActionCard>,
-    pub follow_cards: Vec<ActionCard>
+    pub lead_card: Option<(ActionCard, bool, Color)>,
+    pub follow_cards: Vec<(ActionCard, bool, Color)>
 }
 
 impl GameState {

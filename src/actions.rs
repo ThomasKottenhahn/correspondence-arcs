@@ -356,22 +356,28 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
 
 fn end_chapter(game_state: &GameState) -> GameState {
     //Evaluate Ambitions
+    println!("End Chapter");
     game_state.clone()
 }
 
 fn end_round(game_state: &GameState) -> GameState {
     //determine new Initiative, discard Cards
     let mut new_game_state = game_state.clone();
-    new_game_state.current_player =  match new_game_state.seized {
+
+    let lead = game_state.lead_card.as_ref().unwrap();
+    let follow_cards = game_state.follow_cards.clone();
+
+    new_game_state.current_player =  match new_game_state.seized.clone() {
         Some(c) => c,
         None => {
-            let lead = game_state.lead_card.as_ref().unwrap();
-            //Who played this card?
-            //game_state.follow_cards.iter().chain(vec![lead]).filter(|c| c.action_type == lead.action_type).max_by(|c| c.number)
+            game_state.follow_cards.iter().chain(vec![lead]).filter(|(c, _, _)| c.action_type == lead.0.action_type).max_by_key(|(c, _, _)| c.number).unwrap().2.clone()
         }
     };
 
-    game_state.clone()
+    new_game_state.action_discard.push(lead.0.clone());
+    new_game_state.action_discard = new_game_state.action_discard.iter().cloned().chain(follow_cards.iter().map(|(c, _, _)| c.clone())).collect();
+
+    if new_game_state.players.iter().filter(|a| a.action_cards.len() != 0).count() == 0 {end_chapter(&new_game_state)} else {new_game_state}
 }
 
 fn end_turn(game_state: &GameState) -> GameState {
@@ -398,7 +404,7 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
             match action {
                 Action::PlayLeadCard { card, declare } => {
                     let mut new_game_state = game_state.clone();
-                    new_game_state.lead_card = Some(card.clone());
+                    new_game_state.lead_card = Some((card.clone(), true, game_state.current_player.clone()));
                     match declare {
                         Some(_) => todo!(),
                         None => {},
@@ -407,10 +413,11 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                     new_game_state
                 },
                 Action::Surpass { card, seize } => {
-                    if card.action_type != game_state.lead_card.as_ref().unwrap().action_type {panic!("Cannot surpass with other card type")}
-                    if card.number < game_state.lead_card.as_ref().unwrap().number {panic!("Cannot surpass with a lower card")};
+                    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
+                    if card.action_type != lead_card.action_type {panic!("Cannot surpass with other card type")}
+                    if card.number < lead_card.number {panic!("Cannot surpass with a lower card")};
                     let mut new_game_state = game_state.clone();
-                    new_game_state.follow_cards.push(card.clone());
+                    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
                     match seize {
                         Some(_) => todo!(),
                         None => {},
@@ -419,19 +426,21 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                     new_game_state
                 },
                 Action::Copy { card, seize } => {
+                    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
                     let mut new_game_state = game_state.clone();
-                    new_game_state.follow_cards.push(card.clone());
+                    new_game_state.follow_cards.push((card.clone(), false, game_state.current_player.clone()));
                     match seize {
                         Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
                         None => {},
                     }
-                    new_game_state.turn_state = TurnState::Prelude { action_type: new_game_state.lead_card.as_ref().unwrap().action_type.clone(), pips_left: 1 };
+                    new_game_state.turn_state = TurnState::Prelude { action_type: lead_card.action_type.clone(), pips_left: 1 };
                     new_game_state
                 },
                 Action::Pivot { card, seize } => {
-                    if card.action_type == game_state.lead_card.as_ref().unwrap().action_type {panic!("Cannot Pivot with same card type")};
+                    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
+                    if card.action_type == lead_card.action_type {panic!("Cannot Pivot with same card type")};
                     let mut new_game_state = game_state.clone();
-                    new_game_state.follow_cards.push(card.clone());
+                    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
                     match seize {
                         Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
                         None => {},
@@ -456,26 +465,30 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
             if *pips_left == 0 {panic!("No Action pips left")}
             match action_type {
                 ActionType::Administration => match action {
-                Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
-                Action::Tax { target_system, target_player } => tax(game_state, target_system, target_player),
-                Action::Influence { card_id } => influence(game_state, card_id),
-                _ => panic!("Cannot execute Action with Administration Action Card")
+                    Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
+                    Action::Tax { target_system, target_player } => tax(game_state, target_system, target_player),
+                    Action::Influence { card_id } => influence(game_state, card_id),
+                    Action::EndTurn => end_turn(game_state),
+                    _ => panic!("Cannot execute Action with Administration Action Card")
             },
                 ActionType::Agression =>  match action {
-                Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
-                Action::Secure { card_id , vox_payload} => secure(game_state, card_id, vox_payload),
-                Action::Battle { target_system, target_player, dice } => battle(game_state, target_system, target_player, dice),
-                _ => panic!("Cannot execute Action with Aggresion Action Card")
+                    Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+                    Action::Secure { card_id , vox_payload} => secure(game_state, card_id, vox_payload),
+                    Action::Battle { target_system, target_player, dice } => battle(game_state, target_system, target_player, dice),
+                    Action::EndTurn => end_turn(game_state),
+                    _ => panic!("Cannot execute Action with Aggresion Action Card")
             },
                 ActionType::Construction => match action {
-                Action::Build {target_system, build_type} => build(game_state, target_system, build_type),
-                Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
-                _ => panic!("Cannot execute Action with Construction Action Card")
+                    Action::Build {target_system, build_type} => build(game_state, target_system, build_type),
+                    Action::Repair { target_system, build_type } => repair(game_state, target_system, build_type),
+                    Action::EndTurn => end_turn(game_state),
+                    _ => panic!("Cannot execute Action with Construction Action Card")
             },
                 ActionType::Mobilization => match action {
-                Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
-                Action::Influence { card_id } => influence(game_state, card_id),
-                _ => panic!("Cannot execute Action with Mobilization Action Card")
+                    Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+                    Action::Influence { card_id } => influence(game_state, card_id),
+                    Action::EndTurn => end_turn(game_state),
+                    _ => panic!("Cannot execute Action with Mobilization Action Card")
             }
             }
         },
