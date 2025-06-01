@@ -2,7 +2,9 @@ use core::panic;
 
 use rand::Rng;
 
-use crate::data::{ActionType, Agents, Dice, GameState, Color, Action, Trophy, TrophyType, TurnState, BuildType, BuildingType, Ships, System,BuildingSlot, CourtCard, VoxPayload};
+use crate::data::game_state::{ActionType, Agents, Dice, GameState, TurnState, Color, Action, Trophy, TrophyType, BuildType};
+use crate::data::court_cards::{CourtCard, VoxPayload};
+use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
 pub fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot> {
     if building_slots.len() == 0{
@@ -232,7 +234,7 @@ fn battle(game_state: &GameState, target_system: u8, target_player: Color, dice:
     let battle_system = &game_state.systems[target_system as usize];
     let current_player = &game_state.current_player;
 
-    if dice.len() > battle_system.get_all_ships(current_player).into() {panic!("Cannot roll more dice than ships present")};
+    if dice.len() > battle_system.get_all_ships(current_player) as usize {panic!("Cannot roll more dice than ships present")};
     if !battle_system.has_presence(&target_player) {panic!("Cannot battle {:?} in System without presence.", target_player)}
 
     let (self_hits, intecept, hits, building_hits, keys) = dice.iter().map(|d| {
@@ -318,7 +320,7 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
                 system_id: *system_id,
                 system_type: system_type.clone(),
                 building_slots: building_slots.iter().enumerate().map(|(i, b)| {
-                    if i == ind.into() {
+                    if i == ind as usize {
                         match b {
                             BuildingSlot::Occupied { fresh, player, building_type, .. } => BuildingSlot::Occupied {
                                 fresh: *fresh,
@@ -337,8 +339,8 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
                 connects_to: connects_to.clone() };
             
             let taxed_resource = match system_type {
-                crate::data::SystemType::Gate => panic!("Cannot tax Gate System"),
-                crate::data::SystemType::Planet { resource } => resource.clone(),
+                SystemType::Gate => panic!("Cannot tax Gate System"),
+                SystemType::Planet { resource } => resource.clone(),
             };
 
             let resource_count = new_game_state.resource_reserve.get(&taxed_resource).expect("No Resource in Reserve").clone();

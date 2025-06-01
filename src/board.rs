@@ -1,7 +1,8 @@
 use std::collections::hash_map;
 
-use crate::data;
-use crate::data::{GameState,PlayerArea,Ships,TurnState,SetupCard,System,Color,SystemType,BuildingSlot,ResourceType};
+use crate::data::system::{System, SystemType, Ships, BuildingSlot, BuildingType};
+use crate::data::setup_cards::{SetupCard};
+use crate::data::game_state::{GameState, PlayerArea, TurnState, Color, ResourceType};
 
 use crate::actions::place_ships;
 use crate::actions::place_building;
@@ -133,7 +134,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
                 } => *system = System::Used { 
                     system_id: *system_id,
                     system_type: system_type.clone(),
-                    building_slots: place_building(&building_slots, data::BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: data::BuildingType::City , used: false}),
+                    building_slots: place_building(&building_slots, BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: BuildingType::City , used: false}),
                     ships: place_ships(&ships, color.clone(), 3, 0),
                     controlled_by: controlled_by.clone(),
                     connects_to: connects_to.to_vec()
@@ -162,7 +163,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
                 } => *system = System::Used { 
                     system_id: *system_id,
                     system_type: system_type.clone(),
-                    building_slots: place_building(&building_slots, data::BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: data::BuildingType::Starport , used: false}),
+                    building_slots: place_building(&building_slots, BuildingSlot::Occupied { fresh: true, player: color.clone(), building_type: BuildingType::Starport , used: false}),
                     ships: place_ships(&ships, color.clone(), 3, 0),
                     controlled_by: controlled_by.clone(),
                     connects_to: connects_to.to_vec()

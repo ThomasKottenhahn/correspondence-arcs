@@ -1,0 +1,203 @@
+use std::collections::HashMap;
+
+use super::court_cards::{CourtCard, VoxPayload, Guild};
+use super::system::{System};
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Color {
+    Red,
+    Blue,
+    White,
+    Yellow
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ResourceType {
+    Fuel,
+    Material,
+    Weapons,
+    Relics,
+    Psionics
+}
+
+pub enum PreludeActionPayload {
+    Interest {target_resource: ResourceType, steal_from: Vec<(Color,u8)>},
+    Steal {target_resource: ResourceType, target_player: ResourceType},
+    Union {card_type: ActionType, },
+    PlaceShips {target_system: u8},
+    Farseers {cards: Vec<ActionCard>},
+    RelicFence {target_resource: ResourceType},
+    SilverTounges,
+    ElderBroker,
+    GateKeepers
+}
+
+#[derive(Clone, Debug)]
+pub enum ResourceSlot {
+    Used {keys: u8, resource: ResourceType},
+    Unused {keys: u8},
+    Covered
+}
+
+#[derive(Clone, Debug)]
+pub struct Agents{
+    pub color: Color,
+    pub count: u8
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum TrophyType {
+    Ship,
+    Building,
+    Agent
+}
+
+#[derive(Clone, Debug)]
+pub struct Trophy {
+    pub trophy_type: TrophyType,
+    pub count: u8,
+    pub player: Color
+}
+
+#[derive(Clone, Debug)]
+pub enum BuildType{
+    Starport,
+    City,
+    Ship
+}
+
+#[derive(Clone, Debug)]
+pub enum Dice{
+    Skirmish,
+    Assault,
+    Raid
+}
+
+#[derive(Clone, Debug)]
+pub enum Action{
+    PlayLeadCard {card: ActionCard, declare: Option<AmbitionTypes>},
+    Pass,
+    Surpass {card: ActionCard, seize: Option<ActionCard>},
+    Copy {card: ActionCard, seize: Option<ActionCard>},
+    Pivot {card: ActionCard, seize: Option<ActionCard>},
+    EndPrelude,
+    Build {target_system: u8, build_type: BuildType},
+    Repair {target_system: u8, build_type: BuildType},
+    Tax {target_system: u8, target_player: Color},
+    Influence {card_id: u8},
+    Move {origin_id: u8, destination_id: u8, fresh_ships: u8, damaged_ships: u8},
+    Secure {card_id: u8, vox_payload: Option<VoxPayload>},
+    Battle {target_system: u8, target_player: Color, dice: Vec<Dice>},
+    EndTurn
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ActionType{
+    Administration,
+    Agression,
+    Construction,
+    Mobilization
+}
+
+#[derive(Clone, Debug)]
+pub struct ActionCard{
+    pub action_type: ActionType,
+    pub number: u8,
+    pub pips: u8,
+    pub declared_ambition: Option<AmbitionTypes>
+}
+
+#[derive(Clone, Debug)]
+pub struct PlayerArea {
+    pub player: Color,
+    pub initiative: bool,
+    pub action_cards: Vec<ActionCard>,
+    pub guild_cards: Vec<Guild>,
+    pub reserve_ships: u8,
+    pub reserve_agents: u8,
+    pub reserve_starports: u8,
+    pub reserve_cities: u8,
+    pub resource_slots: Vec<ResourceSlot>,
+    pub captives: Vec<Agents>,
+    pub tropies: Vec<Trophy>
+}
+
+impl PlayerArea {
+    pub fn add_trophies(& mut self, tropies: Vec<Trophy>){
+        let combined = tropies.iter().fold(self.tropies.clone(), {
+            |mut acc, trophy| {
+                if let Some(existing) = acc.iter_mut().find(|t| t.trophy_type == trophy.trophy_type && t.player == trophy.player) {
+                    existing.count += trophy.count;
+                } else {
+                    acc.push(trophy.clone());
+                }
+                acc
+            }
+        });
+        self.tropies = combined;
+    }
+}
+
+#[derive(Clone, Debug)]
+struct AmbitionMarker{
+    first_place: u8,
+    second_place: u8,
+    flipped: bool,
+    first_place_flipped: u8,
+    second_place_flipped: u8
+}
+
+#[derive(Clone, Debug)]
+pub enum AmbitionTypes {
+    Tycoon,
+    Tyrant,
+    Warlord,
+    Keeper,
+    Empath
+}
+
+#[derive(Clone, Debug)]
+pub struct Ambition{
+    ambition_type: AmbitionTypes,
+    markers: Vec<AmbitionMarker>,
+    discarded_resources: Vec<ResourceType>
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum TurnState {
+    TrickTaking,
+    Prelude {action_type: ActionType, pips_left: u8},
+    Actions {action_type: ActionType, pips_left: u8},
+    AllocateResource {resource: ResourceType},
+    AllocateDiceResults {target_system: u8, target_player: Color, self_hits: u8, hits: u8, building_hits: u8, keys: u8}
+}
+
+#[derive(Clone, Debug)]
+pub struct GameState {
+    pub players: Vec<PlayerArea>,
+    pub current_player: Color,
+    pub initiative: Color,
+    pub seized: Option<Color>,
+    pub zero_marker: bool,
+    pub turn_state: TurnState,
+    pub next_turn_state: Option<TurnState>,
+    pub chapter: u8,
+    pub systems: Vec<System>,
+    pub resource_reserve: HashMap<ResourceType, u8>,
+    pub court: Vec<CourtCard>,
+    pub court_draw_pile: Vec<CourtCard>,
+    pub court_discard_pile: Vec<CourtCard>,
+    pub action_discard: Vec<ActionCard>,
+    pub lead_card: Option<(ActionCard, bool, Color)>,
+    pub follow_cards: Vec<(ActionCard, bool, Color)>
+}
+
+impl GameState {
+    pub fn get_player_area(&self, color: &Color) -> PlayerArea {
+        self.players.iter().find(|p| p.player == *color).expect("No such player exists").clone()
+    }
+
+    pub fn get_player_area_ind(&self, color: &Color) -> u8 {
+        self.players.iter().position(|p| p.player == *color).expect("No such player exists") as u8
+    }
+}
