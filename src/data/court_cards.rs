@@ -1,6 +1,6 @@
 use super::game_state::{GameState, Color, Agents, ResourceType, AmbitionTypes, PreludeActionPayload};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CourtCard {
     VoxCard {vox: Vox, agents: Vec<Agents> },
     GuildCard {guild: Guild, agents: Vec<Agents>}
@@ -29,14 +29,14 @@ impl CourtCard {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Vox {
     pub title: String,
     pub description: String,
     pub on_secure: fn(&GameState, VoxPayload) -> GameState
 }
     
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Guild {
     title: String,
     description: String,
@@ -45,7 +45,7 @@ pub struct Guild {
     prelude_action: fn(&GameState, PreludeActionPayload) -> GameState
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum VoxPayload {
     MassUprising {target_cluster: u8},
     PopulistDemands {ambition: Option<AmbitionTypes>},

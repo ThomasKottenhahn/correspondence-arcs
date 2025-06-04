@@ -1,31 +1,31 @@
 use super::game_state::{Color, ResourceType};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ships {
     pub player: Color,
     pub fresh: u8,
     pub damaged: u8
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BuildingType {
     City,
     Starport
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BuildingSlot {
     Occupied {fresh: bool, player: Color, building_type: BuildingType, used: bool},
     Empty
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SystemType{
     Gate,
     Planet {resource: ResourceType}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum System {
     Unused,
     Used {
@@ -129,7 +129,7 @@ impl System{
 
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Cluster {
     gate_id: u8,
     systems_id: Vec<u8>

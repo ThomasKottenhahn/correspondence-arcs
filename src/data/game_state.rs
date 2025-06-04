@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::court_cards::{CourtCard, VoxPayload, Guild};
 use super::system::{System};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Color {
     Red,
     Blue,
@@ -32,48 +32,48 @@ pub enum PreludeActionPayload {
     GateKeepers
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ResourceSlot {
     Used {keys: u8, resource: ResourceType},
     Unused {keys: u8},
     Covered
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Agents{
     pub color: Color,
     pub count: u8
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TrophyType {
     Ship,
     Building,
     Agent
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Trophy {
     pub trophy_type: TrophyType,
     pub count: u8,
     pub player: Color
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BuildType{
     Starport,
     City,
     Ship
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Dice{
     Skirmish,
     Assault,
     Raid
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Action{
     PlayLeadCard {card: ActionCard, declare: Option<AmbitionTypes>},
     Pass,
@@ -91,7 +91,7 @@ pub enum Action{
     EndTurn
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActionType{
     Administration,
     Agression,
@@ -99,7 +99,7 @@ pub enum ActionType{
     Mobilization
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ActionCard{
     pub action_type: ActionType,
     pub number: u8,
@@ -107,7 +107,7 @@ pub struct ActionCard{
     pub declared_ambition: Option<AmbitionTypes>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlayerArea {
     pub player: Color,
     pub initiative: bool,
@@ -138,7 +138,7 @@ impl PlayerArea {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct AmbitionMarker{
     first_place: u8,
     second_place: u8,
@@ -147,7 +147,7 @@ struct AmbitionMarker{
     second_place_flipped: u8
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AmbitionTypes {
     Tycoon,
     Tyrant,
@@ -156,14 +156,14 @@ pub enum AmbitionTypes {
     Empath
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ambition{
     ambition_type: AmbitionTypes,
     markers: Vec<AmbitionMarker>,
     discarded_resources: Vec<ResourceType>
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TurnState {
     TrickTaking,
     Prelude {action_type: ActionType, pips_left: u8},
@@ -172,9 +172,9 @@ pub enum TurnState {
     AllocateDiceResults {target_system: u8, target_player: Color, self_hits: u8, hits: u8, building_hits: u8, keys: u8}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GameState {
-    pub players: Vec<PlayerArea>,
+    pub players: HashMap<Color, PlayerArea>,
     pub current_player: Color,
     pub initiative: Color,
     pub seized: Option<Color>,
@@ -194,10 +194,6 @@ pub struct GameState {
 
 impl GameState {
     pub fn get_player_area(&self, color: &Color) -> PlayerArea {
-        self.players.iter().find(|p| p.player == *color).expect("No such player exists").clone()
-    }
-
-    pub fn get_player_area_ind(&self, color: &Color) -> u8 {
-        self.players.iter().position(|p| p.player == *color).expect("No such player exists") as u8
+        self.players.get(color).expect("Cannot find PlayerArea").clone()
     }
 }
