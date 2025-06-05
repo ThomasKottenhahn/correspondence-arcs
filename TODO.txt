@@ -1,4 +1,4 @@
-~ Check that buildings are only used once per turn 
+X Check that buildings are only used once per turn 
 X Ambitions
 - Prelude Actions
 - Limit Supply for Ships, Agents, Cities, Starports

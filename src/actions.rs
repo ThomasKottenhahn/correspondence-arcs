@@ -17,7 +17,6 @@ fn use_action_pip(game_state: &GameState) -> GameState {
     }
 }
 
-
 pub fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot> {
     if building_slots.len() == 0{
         panic!("No building slots available");
@@ -311,10 +310,9 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
 
     let mut new_game_state =  game_state.clone();
 
-    match (system, unused_building) {
-        (System::Unused, _) => panic!("Cannot tax Unused System"),
-        (System::Used { .. }, None) => panic!("No unused Building available"),
-        (System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to }, Some(ind)) => {
+    match system {
+        System::Unused => panic!("Cannot tax Unused System"),
+        System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to } => {
             if tax_rival {
                 if controlled_by != &Some(game_state.current_player.clone()) {
                     panic!("Cannot tax a rival in a System controlled by another player");
@@ -328,27 +326,7 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
                     player: target_player.clone(),
                 }]);
             }
-            new_game_state.systems[target_system as usize] = System::Used { 
-                system_id: *system_id,
-                system_type: system_type.clone(),
-                building_slots: building_slots.iter().enumerate().map(|(i, b)| {
-                    if i == ind as usize {
-                        match b {
-                            BuildingSlot::Occupied { fresh, player, building_type, .. } => BuildingSlot::Occupied {
-                                fresh: *fresh,
-                                player: player.clone(),
-                                building_type: building_type.clone(),
-                                used: true
-                            },
-                            _ => b.clone()
-                        }
-                    } else {
-                        b.clone()
-                    }
-                }).collect(),
-                ships: ships.clone(),
-                controlled_by: controlled_by.clone(),
-                connects_to: connects_to.clone() };
+            new_game_state.systems[target_system as usize] = new_game_state.systems[target_system as usize].use_building(&BuildingType::City, &target_player);
             
             let taxed_resource = match system_type {
                 SystemType::Gate => panic!("Cannot tax Gate System"),
