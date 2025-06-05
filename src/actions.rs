@@ -2,7 +2,7 @@ use core::panic;
 
 use rand::Rng;
 
-use crate::data::game_state::{Action, ActionCard, ActionType, Agents, AmbitionTypes, BuildType, Color, Dice, GameState, Trophy, TrophyType, TurnState};
+use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BuildType, Color, Dice, GameState, Trophy, TrophyType, TurnState};
 use crate::data::court_cards::{CourtCard, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
@@ -356,8 +356,7 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
             };
 
             let resource_count = new_game_state.resource_reserve.get(&taxed_resource).expect("No Resource in Reserve").clone();
-            new_game_state.resource_reserve.remove(&taxed_resource);
-            if resource_count > 0{
+            if resource_count > 0 {
                 new_game_state.resource_reserve.insert(taxed_resource.clone(), resource_count - 1);
                 new_game_state.next_turn_state = Some(new_game_state.turn_state.clone());
                 new_game_state.turn_state = TurnState::AllocateResource { resource: taxed_resource };
@@ -366,6 +365,22 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
 
     }
     new_game_state
+}
+
+fn declare_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameState {
+    let highest_ambition = game_state.ambition_markers.iter().max_by_key(|am| if am.flipped {am.first_place_flipped} else {am.first_place});
+    let highest_ambition = match highest_ambition {
+        Some(a) => a,
+        None => panic!("Cannot declare, because no AmbitionMarker is available")
+    };
+    let mut ambitions = game_state.ambitions.clone();
+    let ambition_box = ambitions.get(&ambition).unwrap();
+    ambitions.insert(ambition, Ambition{markers: ambition_box.markers.iter().chain(vec![highest_ambition]).cloned().collect(), .. ambition_box.clone()});
+    GameState{
+        ambition_markers: game_state.ambition_markers.iter().filter(|am| am != &highest_ambition).cloned().collect(),
+        ambitions: ambitions,
+        .. game_state.clone()
+    }
 }
 
 fn end_chapter(game_state: &GameState) -> GameState {
@@ -422,12 +437,19 @@ fn play_lead_card(game_state: &GameState, card: ActionCard, declare: Option<Ambi
     player_area.remove_action_card(card.clone());
     new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
     new_game_state.lead_card = Some((card.clone(), true, game_state.current_player.clone()));
+    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type.clone(), pips_left: card.pips };
     match declare {
-        Some(_) => todo!(),
-        None => {}
+        Some(ambition) => {
+            match &card.declared_ambition {
+                Some(possible_declare) => if possible_declare == &ambition 
+                        {declare_ambition(game_state, ambition)}
+                    else
+                        {panic!("AmbitionType on card {:?} does not match Ambition {:?}", &card, ambition)},
+                None => panic!("Cannot declare Ambition with {:?}", card),
+            }
+        },
+        None => new_game_state 
     }
-    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
-    new_game_state
 }
 
 fn surpass(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {

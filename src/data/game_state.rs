@@ -151,15 +151,15 @@ impl PlayerArea {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct AmbitionMarker{
-    first_place: u8,
-    second_place: u8,
-    flipped: bool,
-    first_place_flipped: u8,
-    second_place_flipped: u8
+pub struct AmbitionMarker{
+    pub first_place: u8,
+    pub second_place: u8,
+    pub flipped: bool,
+    pub first_place_flipped: u8,
+    pub second_place_flipped: u8
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum AmbitionTypes {
     Tycoon,
     Tyrant,
@@ -170,9 +170,9 @@ pub enum AmbitionTypes {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ambition{
-    ambition_type: AmbitionTypes,
-    markers: Vec<AmbitionMarker>,
-    discarded_resources: Vec<ResourceType>
+    pub ambition_type: AmbitionTypes,
+    pub markers: Vec<AmbitionMarker>,
+    pub discarded_resources: Vec<ResourceType>
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -202,7 +202,9 @@ pub struct GameState {
     pub court_discard_pile: Vec<CourtCard>,
     pub action_discard: Vec<ActionCard>,
     pub lead_card: Option<(ActionCard, bool, Color)>,
-    pub follow_cards: Vec<(ActionCard, bool, Color)>
+    pub follow_cards: Vec<(ActionCard, bool, Color)>,
+    pub ambition_markers: Vec<AmbitionMarker>,
+    pub ambitions: HashMap<AmbitionTypes, Ambition>
 }
 
 impl GameState {

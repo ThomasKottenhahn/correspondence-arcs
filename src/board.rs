@@ -2,7 +2,7 @@ use std::collections::hash_map;
 
 use crate::data::system::{System, SystemType, Ships, BuildingSlot, BuildingType};
 use crate::data::setup_cards::{SetupCard};
-use crate::data::game_state::{GameState, PlayerArea, TurnState, Color, ResourceType};
+use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ResourceType, TurnState};
 
 use crate::actions::place_ships;
 use crate::actions::place_building;
@@ -209,6 +209,17 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         resource_reserve.insert(key.clone(), value);
     }
 
+    let ambition_markers = vec![
+        AmbitionMarker {first_place: 2, second_place: 0, flipped: false, first_place_flipped: 4, second_place_flipped: 2},
+        AmbitionMarker {first_place: 3, second_place: 2, flipped: false, first_place_flipped: 6, second_place_flipped: 4},
+        AmbitionMarker {first_place: 5, second_place: 3, flipped: false, first_place_flipped: 9, second_place_flipped: 5}
+    ];
+
+    let ambitions = vec![AmbitionTypes::Tycoon, AmbitionTypes::Tyrant, AmbitionTypes::Warlord, AmbitionTypes::Keeper, AmbitionTypes::Empath]
+        .iter()
+        .map(|a| (a.clone(), Ambition {ambition_type: a.clone(), markers: vec![], discarded_resources: vec![]}))
+        .collect();
+
     return GameState{
         players: players.clone().into_iter().map(|p| (p.player.clone(), p)).collect(),
         current_player: Color::Red,
@@ -226,6 +237,8 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         court_draw_pile: vec![],
         action_discard: vec![],
         lead_card: None,
-        follow_cards: vec![]        
+        follow_cards: vec![],
+        ambition_markers: ambition_markers,
+        ambitions: ambitions  
     };
 }
