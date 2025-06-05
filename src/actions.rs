@@ -37,10 +37,10 @@ pub fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot
     return building_slots.clone();
 }
 
-pub fn place_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships> {
+pub fn place_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
     let mut new_ships: Vec<Ships> = vec![];
     for ships_struct in ships{
-        if ships_struct.player == player {
+        if &ships_struct.player == player {
             let mut ships_struct = ships_struct.clone();
             ships_struct.fresh = ships_struct.fresh + fresh;
             ships_struct.damaged = ships_struct.damaged + damaged;
@@ -52,10 +52,10 @@ pub fn place_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) ->
     return new_ships;
 }
 
-fn remove_ships(ships: &Vec<Ships>, player: Color, fresh: u8, damaged: u8) -> Vec<Ships> {
+fn remove_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
     let mut new_ships: Vec<Ships> = vec![];
     for ships_struct in ships{
-        if ships_struct.player == player {
+        if &ships_struct.player == player {
             let mut ships_struct = ships_struct.clone();
             ships_struct.fresh = ships_struct.fresh.checked_sub(fresh).expect("Tried to move more fresh ships than available");
             ships_struct.damaged = ships_struct.damaged.checked_sub(damaged).expect("Tried to move more damaged ships than available");
@@ -94,10 +94,10 @@ fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -> Ga
                 BuildType::Ship => game_state.systems[target_system as usize] = System::Used {
                     system_id: system_id, 
                     system_type: system_type.clone(), 
-                    building_slots: building_slots.clone(), 
-                    ships: place_ships(&ships, current_player, if build_fresh {1} else {0}, if !build_fresh {0} else {0}), 
+                    building_slots: building_slots.clone(),
+                    ships: place_ships(&ships, &current_player, if build_fresh {1} else {0}, if !build_fresh {0} else {0}), 
                     controlled_by: controlled_by.clone(), 
-                    connects_to: connects_to.clone() }.update_control(),
+                    connects_to: connects_to.clone() }.use_building(&BuildingType::Starport, &current_player).update_control(),
                 BuildType::City => {
                     let building = BuildingSlot::Occupied {fresh: build_fresh, player: current_player, building_type: BuildingType::City, used: false};
                     game_state.systems[target_system as usize] = System::Used {
@@ -142,7 +142,7 @@ pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_syst
             connects_to
         } => {
             if !connects_to.contains(&destination_system_id) {panic!("Destination not connected to Origin")}
-            let updated_ships = remove_ships(&ships, game_state.current_player.clone(), fresh, damaged);
+            let updated_ships = remove_ships(&ships, &game_state.current_player, fresh, damaged);
             game_state.systems[origin_system_id as usize] = System::Used {
                 system_id,
                 system_type: system_type.clone(),
@@ -164,7 +164,7 @@ pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_syst
             controlled_by,
             connects_to
         } => {
-            let updated_ships = place_ships(&ships, game_state.current_player.clone(), fresh, damaged);
+            let updated_ships = place_ships(&ships, &game_state.current_player, fresh, damaged);
             game_state.systems[destination_system_id as usize] = System::Used {
                 system_id: system_id, 
                 system_type: system_type.clone(), 
@@ -193,8 +193,8 @@ fn repair(game_state: &GameState, target_system: u8, build_type: BuildType) -> G
             connects_to
         } => match build_type {
             BuildType::Ship => {
-                let ships = remove_ships(&ships, current_player.clone(), 0, 1);
-                let ships = place_ships(&ships, current_player.clone(), 1, 0);
+                let ships = remove_ships(&ships, &current_player, 0, 1);
+                let ships = place_ships(&ships, &current_player, 1, 0);
                 game_state.systems[target_system as usize] = System::Used {
                     system_id: system_id,
                     system_type: system_type,
@@ -375,8 +375,8 @@ fn end_chapter(game_state: &GameState) -> GameState {
 }
 
 fn end_round(game_state: &GameState) -> GameState {
-    //determine new Initiative, discard Cards
     println!("Ending Round");
+    //determine new Initiative, discard Cards
     let mut new_game_state = game_state.clone();
 
     let lead = game_state.lead_card.as_ref().unwrap();
@@ -389,12 +389,11 @@ fn end_round(game_state: &GameState) -> GameState {
         }
     };
 
-    println!("{:?}", new_game_state.initiative);
-
     new_game_state.current_player = new_game_state.initiative.clone();
 
     new_game_state.action_discard.push(lead.0.clone());
     new_game_state.action_discard = new_game_state.action_discard.iter().cloned().chain(follow_cards.iter().map(|(c, _, _)| c.clone())).collect();
+    new_game_state.follow_cards = vec![];
     new_game_state.turn_state = TurnState::TrickTaking;
     new_game_state.players_in_round = new_game_state.players.iter().filter(|(_, a)| a.action_cards.len() != 0).count() as u8;
 
@@ -402,16 +401,19 @@ fn end_round(game_state: &GameState) -> GameState {
 }
 
 fn end_turn(game_state: &GameState) -> GameState {
-    // last player in Turn Order
-    if (1 + game_state.follow_cards.len()) as u8 == game_state.players_in_round {
-        return end_round(game_state);
-    }
     //Otherwise next players Turn
     let player_order: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow].iter().take(game_state.players.len()).cloned().collect();
     let mut new_game_state = game_state.clone();
     new_game_state.turn_state = TurnState::TrickTaking;
     new_game_state.current_player = player_order[(player_order.iter().position(|c| *c == new_game_state.current_player).unwrap() + 1)%player_order.len()].clone();
-    new_game_state
+    new_game_state.systems = new_game_state.systems.iter().map(|s| s.refresh_buildings()).collect();
+
+    // last player in Turn Order
+    if (1 + game_state.follow_cards.len()) as u8 == game_state.players_in_round {
+        return end_round(&new_game_state);
+    } else {
+        new_game_state
+    }
 }
 
 fn play_lead_card(game_state: &GameState, card: ActionCard, declare: Option<AmbitionTypes>) -> GameState {

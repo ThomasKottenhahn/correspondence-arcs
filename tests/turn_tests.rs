@@ -58,6 +58,8 @@ mod test{
             Action::Build { target_system: 18, build_type: BuildType::Ship }
         ]);
 
+        let g4 = actions::execute_action(&g4, Action::EndTurn);
+
         assert_eq!(g4.initiative, Color::Blue);
         assert_eq!(g4.current_player, Color::Blue);
 

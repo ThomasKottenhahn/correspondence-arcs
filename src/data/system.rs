@@ -1,3 +1,5 @@
+use std::io::Empty;
+
 use super::game_state::{Color, ResourceType};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -19,6 +21,29 @@ pub enum BuildingSlot {
     Empty
 }
 
+impl BuildingSlot {
+    pub fn use_building(&self) -> BuildingSlot {
+        match self {
+            BuildingSlot::Empty => panic!("Cannot use Empty BuildingSlot"),
+            BuildingSlot::Occupied { fresh, player, building_type, used: false } => {
+                BuildingSlot::Occupied {
+                    fresh: *fresh, player: player.clone(), building_type: building_type.clone(), used: true,}
+            },
+            _ => panic!("Cannot use already used BuildingSlot")
+        }
+    }
+
+    pub fn refresh_building(&self) -> BuildingSlot {
+        match self {
+            BuildingSlot::Empty => BuildingSlot::Empty,
+            BuildingSlot::Occupied { fresh, player, building_type, used: _ } => {
+                BuildingSlot::Occupied {
+                    fresh: *fresh, player: player.clone(), building_type: building_type.clone(), used: false,}
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SystemType{
     Gate,
@@ -35,6 +60,49 @@ pub enum System {
     ships: Vec<Ships>,
     controlled_by: Option<Color>,
     connects_to: Vec<u8>
+    }
+}
+
+impl System {
+    pub fn use_building(&self, building: &BuildingType, player_color: &Color) -> System {
+        match self {
+            System::Unused => panic!("Cannot use Building in Unused System"),
+            System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to } => {
+                let building_position = building_slots.iter().position(|b| {
+                    match b {
+                        BuildingSlot::Occupied { fresh: _, player, building_type, used: false } => player == player_color && building_type == building,
+                        _ => false
+                    }
+                });
+                let building_position = match building_position {
+                    Some(i) => i,
+                    None => panic!("Cannot find unused Buildingslot in System {:?} of type {:?}", system_id, building)
+                };
+                System::Used { system_id: *system_id,
+                    system_type: system_type.clone(),
+                    building_slots: building_slots.iter().enumerate().map(|(i,b)| if i == building_position {b.use_building()} else {b.clone()}).collect(),
+                    ships: ships.clone(),
+                    controlled_by: controlled_by.clone(),
+                    connects_to: connects_to.clone() 
+                }
+            },
+        }
+    }
+
+    pub fn refresh_buildings(&self) -> System {
+        match self {
+            System::Unused => System::Unused,
+            System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to } => {
+                System::Used { 
+                    system_id: *system_id,
+                    system_type: system_type.clone(),
+                    building_slots: building_slots.iter().map(|b| b.refresh_building()).collect(),
+                    ships: ships.clone(),
+                    controlled_by: controlled_by.clone(),
+                    connects_to: connects_to.clone() 
+                }
+            },
+        }
     }
 }
 

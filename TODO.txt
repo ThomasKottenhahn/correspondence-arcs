@@ -1,7 +1,12 @@
 - Check that buildings are only used once per turn
-- Prelude Actions
 - Ambitions
 - Ambition Scoring
+- Limit Supply for Ships, Agents, Cities, Starports
+- Implement Blocking Resourceslots
+- Allocate Resources
+- Allocate DiceResults
+- Prelude Actions
 - Create Guild cards
 - Guild card Actions
 - VoxActions
+- Remove Mutability

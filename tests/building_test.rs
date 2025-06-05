@@ -2,8 +2,8 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{SetupCard, two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{GameState, ActionCard, Action, ActionType, AmbitionTypes, Color, BuildType};
-    use correspondence_arcs::data::system::{System, BuildingSlot, BuildingType, Ships};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BuildType, Color, GameState, ResourceType};
+    use correspondence_arcs::data::system::{BuildingSlot, BuildingType, Ships, System, SystemType};
     
     use correspondence_arcs::board;
     use correspondence_arcs::actions;
@@ -25,9 +25,13 @@ mod test{
         ]);
 
         match &new_game_state.systems[target_system as usize] {
-            System::Used {ships, controlled_by, ..} => {
+            System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to } => {
+                assert_eq!(system_id, &17);
+                assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Material });
+                assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Red, building_type: BuildingType::Starport, used: true }]);
                 assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 4, damaged: 0 }, Ships { player: Color::Blue, fresh: 0, damaged: 0 }]);
                 assert_eq!(controlled_by, &Some(Color::Red));
+                assert_eq!(connects_to, &vec![3,16])
             }
             _ => panic!("Expected Used system variant")
         }
