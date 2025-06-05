@@ -11,7 +11,9 @@ mod test{
     #[test]
     fn test_building_ships(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let target_system = 17;
         let build_type = BuildType::Ship;
@@ -34,7 +36,9 @@ mod test{
     #[test]
     fn test_execute_building_action(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let target_system = 17;
         let build_type = BuildType::Ship;
@@ -57,7 +61,9 @@ mod test{
     #[test]
     fn test_building_city(){
         let test_setup: SetupCard = SetupCard { players: 2, cluster_out_of_play: vec![0,5], a_locations: vec![20,11], b_locations: vec![17, 18], c_locations: vec![2,4,14,15]};
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let target_system = 16;
         let build_type = BuildType::City;
@@ -82,7 +88,9 @@ mod test{
     #[test]
     fn building_starport(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let target_system: u8 = 15;
         let build_type = BuildType::Starport;
@@ -110,7 +118,9 @@ mod test{
     #[should_panic(expected = "No building slots available")]
     fn building_in_gate(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let target_system = 3;
         let build_type = BuildType::Starport;
@@ -127,7 +137,9 @@ mod test{
     #[should_panic(expected = "All building slots are occupied")]
     fn build_in_full_system(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let target_system = 17;
         let build_type = BuildType::Starport;

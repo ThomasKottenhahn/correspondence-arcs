@@ -1,0 +1,7 @@
+- Check that buildings are only used once per turn
+- Prelude Actions
+- Ambitions
+- Ambition Scoring
+- Create Guild cards
+- Guild card Actions
+- VoxActions

@@ -210,8 +210,9 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
     }
 
     return GameState{
-        players: players.into_iter().map(|p| (p.player.clone(), p)).collect(),
+        players: players.clone().into_iter().map(|p| (p.player.clone(), p)).collect(),
         current_player: Color::Red,
+        players_in_round: players.len() as u8,
         turn_state: TurnState::TrickTaking,
         next_turn_state: None,
         initiative: Color::Red,

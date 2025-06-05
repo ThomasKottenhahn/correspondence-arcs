@@ -2,15 +2,27 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BuildType, Color, GameState, TurnState};
-    use correspondence_arcs::data::system::{System, BuildingSlot, BuildingType, Ships};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BuildType, Color, GameState, ResourceType, TurnState};
+    use correspondence_arcs::data::system::{BuildingSlot, BuildingType, Ships, System, SystemType};
     
     use correspondence_arcs::board;
     use correspondence_arcs::actions;
 
     #[test]
     fn mobilization_then_construction(){
-        let game_state = board::setup_game(&two_player_frontiers());
+        let mut game_state = board::setup_game(&two_player_frontiers());
+
+        game_state.add_action_cards(&Color::Red, vec![
+            ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) },
+            ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }
+            ]);
+
+        game_state.add_action_cards(&Color::Blue, vec![
+            ActionCard { action_type: ActionType::Construction, number: 6, pips: 2, declared_ambition: Some(AmbitionTypes::Empath) },
+            ActionCard { action_type: ActionType::Construction, number: 3, pips: 3, declared_ambition: Some(AmbitionTypes::Tyrant) }
+            ]);
+
+        assert_eq!(game_state.current_player, Color::Red);
 
         let g1: GameState = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
@@ -47,7 +59,61 @@ mod test{
         ]);
 
         assert_eq!(g4.initiative, Color::Blue);
-        assert_eq!(g4.current_player, Color::Blue)
+        assert_eq!(g4.current_player, Color::Blue);
+
+        match &g4.systems[17] {
+            System::Unused => panic!("Expected Used System"),
+            System::Used { 
+                system_id, 
+                system_type, 
+                building_slots, 
+                ships, 
+                controlled_by, 
+                connects_to } => {
+                    assert_eq!(system_id, &17);
+                    assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Material });
+                    assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Red, building_type: BuildingType::Starport, used: false }]);
+                    assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 1, damaged: 0}, Ships { player: Color::Blue, fresh: 0, damaged: 0}]);
+                    assert_eq!(controlled_by, &Some(Color::Red));
+                    assert_eq!(connects_to, &vec![3, 16])
+                },
+        }
+
+        match &g4.systems[16] {
+            System::Unused => panic!("Expected Used System"),
+            System::Used { 
+                system_id, 
+                system_type, 
+                building_slots, 
+                ships, 
+                controlled_by, 
+                connects_to } => {
+                    assert_eq!(system_id, &16);
+                    assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Fuel });
+                    assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Red, building_type: BuildingType::Starport, used: false }, BuildingSlot::Empty]);
+                    assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 2, damaged: 0}, Ships { player: Color::Blue, fresh: 0, damaged: 0}]);
+                    assert_eq!(controlled_by, &Some(Color::Red));
+                    assert_eq!(connects_to, &vec![3, 15, 17])
+                },
+        }
+
+        match &g4.systems[18] {
+            System::Unused => panic!("Expected Used System"),
+            System::Used { 
+                system_id, 
+                system_type, 
+                building_slots, 
+                ships, 
+                controlled_by, 
+                connects_to } => {
+                    assert_eq!(system_id, &18);
+                    assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Weapons });
+                    assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Blue, building_type: BuildingType::Starport, used: false }]);
+                    assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 0, damaged: 0}, Ships { player: Color::Blue, fresh: 5, damaged: 0}]);
+                    assert_eq!(controlled_by, &Some(Color::Blue));
+                    assert_eq!(connects_to, &vec![4, 19])
+                },
+        }
 
     }
 

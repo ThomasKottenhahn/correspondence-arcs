@@ -10,7 +10,9 @@ mod test{
     #[test]
     fn test_tax_own_city(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Administration, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let target_system = 20;
 

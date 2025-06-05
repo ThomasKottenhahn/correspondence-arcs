@@ -136,6 +136,18 @@ impl PlayerArea {
         });
         self.tropies = combined;
     }
+
+    pub fn add_action_cards(&mut self, cards: Vec<ActionCard>){
+        self.action_cards.extend(cards);
+    }
+
+    pub fn remove_action_card(&mut self, card: ActionCard) {
+        let ind = self.action_cards.iter().position(|c| *c == card);
+        match ind {
+            Some(i) => { self.action_cards.remove(i); }
+            None => panic!("Action Card does not exist: {:?} in {:?}", card, self.player),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -176,6 +188,7 @@ pub enum TurnState {
 pub struct GameState {
     pub players: HashMap<Color, PlayerArea>,
     pub current_player: Color,
+    pub players_in_round: u8,
     pub initiative: Color,
     pub seized: Option<Color>,
     pub zero_marker: bool,
@@ -195,5 +208,11 @@ pub struct GameState {
 impl GameState {
     pub fn get_player_area(&self, color: &Color) -> PlayerArea {
         self.players.get(color).expect("Cannot find PlayerArea").clone()
+    }
+
+    pub fn add_action_cards(&mut self, color: &Color, cards: Vec<ActionCard>) {
+        let mut player_area = self.get_player_area(color);
+        player_area.add_action_cards(cards);
+        self.players.insert(color.clone(), player_area);
     }
 }

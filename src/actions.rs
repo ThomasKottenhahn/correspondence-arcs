@@ -2,7 +2,7 @@ use core::panic;
 
 use rand::Rng;
 
-use crate::data::game_state::{ActionType, Agents, Dice, GameState, TurnState, Color, Action, Trophy, TrophyType, BuildType};
+use crate::data::game_state::{Action, ActionCard, ActionType, Agents, AmbitionTypes, BuildType, Color, Dice, GameState, Trophy, TrophyType, TurnState};
 use crate::data::court_cards::{CourtCard, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
@@ -375,8 +375,8 @@ fn end_chapter(game_state: &GameState) -> GameState {
 }
 
 fn end_round(game_state: &GameState) -> GameState {
-    println!("Ending Round");
     //determine new Initiative, discard Cards
+    println!("Ending Round");
     let mut new_game_state = game_state.clone();
 
     let lead = game_state.lead_card.as_ref().unwrap();
@@ -389,18 +389,21 @@ fn end_round(game_state: &GameState) -> GameState {
         }
     };
 
+    println!("{:?}", new_game_state.initiative);
+
     new_game_state.current_player = new_game_state.initiative.clone();
 
     new_game_state.action_discard.push(lead.0.clone());
     new_game_state.action_discard = new_game_state.action_discard.iter().cloned().chain(follow_cards.iter().map(|(c, _, _)| c.clone())).collect();
+    new_game_state.turn_state = TurnState::TrickTaking;
+    new_game_state.players_in_round = new_game_state.players.iter().filter(|(_, a)| a.action_cards.len() != 0).count() as u8;
 
     if new_game_state.players.iter().filter(|(_, area)| area.action_cards.len() != 0).count() == 0 {end_chapter(&new_game_state)} else {new_game_state}
 }
 
 fn end_turn(game_state: &GameState) -> GameState {
     // last player in Turn Order
-    println!("{:?}", 1 + game_state.follow_cards.len());
-    if 1 + game_state.follow_cards.len() == game_state.players.iter().filter(|(_, area)| area.action_cards.len() != 0).count() {
+    if (1 + game_state.follow_cards.len()) as u8 == game_state.players_in_round {
         return end_round(game_state);
     }
     //Otherwise next players Turn
@@ -408,6 +411,68 @@ fn end_turn(game_state: &GameState) -> GameState {
     let mut new_game_state = game_state.clone();
     new_game_state.turn_state = TurnState::TrickTaking;
     new_game_state.current_player = player_order[(player_order.iter().position(|c| *c == new_game_state.current_player).unwrap() + 1)%player_order.len()].clone();
+    new_game_state
+}
+
+fn play_lead_card(game_state: &GameState, card: ActionCard, declare: Option<AmbitionTypes>) -> GameState {
+    let mut new_game_state = game_state.clone();
+    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
+    player_area.remove_action_card(card.clone());
+    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
+    new_game_state.lead_card = Some((card.clone(), true, game_state.current_player.clone()));
+    match declare {
+        Some(_) => todo!(),
+        None => {}
+    }
+    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
+    new_game_state
+}
+
+fn surpass(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {
+    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
+    if card.action_type != lead_card.action_type {panic!("Cannot surpass with other card type")}
+    if card.number < lead_card.number {panic!("Cannot surpass with a lower card")};
+    let mut new_game_state = game_state.clone();
+    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
+    player_area.remove_action_card(card.clone());
+    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
+    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
+    match seize {
+        Some(_) => todo!(),
+        None => {},
+    }
+    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
+    new_game_state
+}
+
+fn copy(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {
+    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
+    let mut new_game_state = game_state.clone();
+    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
+    player_area.remove_action_card(card.clone());
+    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
+    new_game_state.follow_cards.push((card.clone(), false, game_state.current_player.clone()));
+    match seize {
+        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
+        None => {},
+    }
+    new_game_state.turn_state = TurnState::Prelude { action_type: lead_card.action_type.clone(), pips_left: 1 };
+    new_game_state
+}
+
+fn pivot(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {
+    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
+    if card.action_type == lead_card.action_type {panic!("Cannot Pivot with same card type")};
+    let mut new_game_state = game_state.clone();
+    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
+    player_area.remove_action_card(card.clone());
+    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
+    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
+    match seize {
+        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
+        None => {},
+    }
+    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: 1 };
     new_game_state
 }
 
@@ -421,52 +486,10 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
     match &game_state.turn_state {
         TurnState::TrickTaking => {
             match action {
-                Action::PlayLeadCard { card, declare } => {
-                    let mut new_game_state = game_state.clone();
-                    new_game_state.lead_card = Some((card.clone(), true, game_state.current_player.clone()));
-                    match declare {
-                        Some(_) => todo!(),
-                        None => {},
-                    }
-                    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
-                    new_game_state
-                },
-                Action::Surpass { card, seize } => {
-                    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
-                    if card.action_type != lead_card.action_type {panic!("Cannot surpass with other card type")}
-                    if card.number < lead_card.number {panic!("Cannot surpass with a lower card")};
-                    let mut new_game_state = game_state.clone();
-                    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
-                    match seize {
-                        Some(_) => todo!(),
-                        None => {},
-                    }
-                    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
-                    new_game_state
-                },
-                Action::Copy { card, seize } => {
-                    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
-                    let mut new_game_state = game_state.clone();
-                    new_game_state.follow_cards.push((card.clone(), false, game_state.current_player.clone()));
-                    match seize {
-                        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
-                        None => {},
-                    }
-                    new_game_state.turn_state = TurnState::Prelude { action_type: lead_card.action_type.clone(), pips_left: 1 };
-                    new_game_state
-                },
-                Action::Pivot { card, seize } => {
-                    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
-                    if card.action_type == lead_card.action_type {panic!("Cannot Pivot with same card type")};
-                    let mut new_game_state = game_state.clone();
-                    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
-                    match seize {
-                        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
-                        None => {},
-                    }
-                    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: 1 };
-                    new_game_state
-                },
+                Action::PlayLeadCard { card, declare } => play_lead_card(game_state, card, declare),
+                Action::Surpass { card, seize } => surpass(game_state, card, seize),
+                Action::Copy { card, seize } => copy(game_state, card, seize),
+                Action::Pivot { card, seize } => pivot(game_state, card, seize),
                 _ => panic!("Can only Execute TrickTaking Actions")
             }
         },

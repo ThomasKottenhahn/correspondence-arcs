@@ -10,7 +10,9 @@ mod test {
     #[test]
     fn move_1_ship() {
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let origin_system = 17;
         let destination_system = 3;
@@ -42,7 +44,9 @@ mod test {
     #[test]
     fn move_all_ships() {
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let origin_system = 17;
         let destination_system = 16;
@@ -75,7 +79,9 @@ mod test {
     #[should_panic(expected = "Destination not connected to Origin")]
     fn move_to_non_adjacent_system(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let origin_system = 17;
         let destination_system = 18;

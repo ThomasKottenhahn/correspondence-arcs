@@ -10,7 +10,9 @@ mod test {
     #[test]
     fn roll_one_skirmish_dice() {
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let game_state = actions::move_ships(&game_state, 17, 16, 1, 0);
         let game_state = actions::move_ships(&game_state, 16, 15, 1, 0);
@@ -40,7 +42,9 @@ mod test {
     #[test]
     fn roll_three_skirmish_dice() {
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let game_state = actions::move_ships(&game_state, 17, 16, 3, 0);
         let game_state = actions::move_ships(&game_state, 16, 15, 3, 0);
@@ -74,7 +78,9 @@ mod test {
     #[should_panic(expected="Cannot roll more dice than ships present")]
     fn roll_more_dice_than_ships(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let game_state = actions::move_ships(&game_state, 17, 16, 1, 0);
         let game_state = actions::move_ships(&game_state, 16, 15, 1, 0);
@@ -90,7 +96,9 @@ mod test {
     #[should_panic(expected="Cannot battle Blue in System without presence.")]
     fn battle_without_target(){
         let test_setup: SetupCard = two_player_frontiers();
-        let game_state: GameState = board::setup_game(&test_setup);
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
         let game_state = actions::move_ships(&game_state, 17, 16, 1, 0);
 
