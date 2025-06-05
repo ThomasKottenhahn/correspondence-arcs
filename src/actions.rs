@@ -305,7 +305,6 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
 
 fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameState {
     let system = &game_state.systems[target_system as usize];
-    let unused_building = system.has_unused_building(BuildingType::City, &target_player);
     let tax_rival = target_player != game_state.current_player;
 
     let mut new_game_state =  game_state.clone();
