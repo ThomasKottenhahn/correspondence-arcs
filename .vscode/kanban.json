@@ -11,10 +11,6 @@
             "title": "To-Do",
             "tasks": [
                 {
-                    "text": "Vox Actions",
-                    "id": "t4xgr7b38ysoqhj1k04xr6n9"
-                },
-                {
                     "text": "Guild Cards Actions",
                     "id": "kbrc8ixdvmod5dqm5n5y5ae8"
                 },
@@ -25,6 +21,10 @@
                 {
                     "text": "Allocate Dice Results",
                     "id": "zkt64njan3f2pnhrbvnacvuh"
+                },
+                {
+                    "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
+                    "id": "z5pg8rkwufgci0l7i3miatys"
                 },
                 {
                     "text": "Allocate Resources",
@@ -50,8 +50,8 @@
             "title": "Doing",
             "tasks": [
                 {
-                    "text": "Blocking ResourceSlots",
-                    "id": "aezypf9cu17amaos9gg03l5e"
+                    "text": "Vox Actions",
+                    "id": "t4xgr7b38ysoqhj1k04xr6n9"
                 }
             ],
             "id": "to0kc4sk1ozwmt77reeyi9e8",
@@ -60,6 +60,14 @@
         {
             "title": "Untested",
             "tasks": [
+                {
+                    "text": "Blocking ResourceSlots",
+                    "id": "aezypf9cu17amaos9gg03l5e"
+                },
+                {
+                    "text": "Reserve Limits",
+                    "id": "r1wlvtwab3ssal82fvlh8yxx"
+                },
                 {
                     "text": "Secure",
                     "id": "kirijxvs5msbakmncqdz5wx4"
@@ -71,10 +79,6 @@
                 {
                     "text": "Taxing Rivals",
                     "id": "m1ne8a5x9g4exwffohc81wd4"
-                },
-                {
-                    "text": "Reserve Limits",
-                    "id": "r1wlvtwab3ssal82fvlh8yxx"
                 }
             ],
             "id": "crpwi6ycq8zaa3es3mijqlzr",
@@ -95,5 +99,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1749206268536
+    "timestamp": 1749239653936
 }

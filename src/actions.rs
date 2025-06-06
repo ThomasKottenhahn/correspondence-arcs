@@ -266,7 +266,7 @@ fn battle(game_state: &GameState, target_system: u8, target_player: Color, dice:
 
     let self_hits = if intecept >= 1 {self_hits + game_state.systems[target_system as usize].get_fresh_ships(&target_player)} else {self_hits};
     let mut new_game_state = game_state.clone();
-    new_game_state.next_turn_state = Some(new_game_state.turn_state);
+    new_game_state.next_turn_states = vec![new_game_state.turn_state];
     new_game_state.turn_state = TurnState::AllocateDiceResults { target_system: target_system, target_player: target_player, self_hits: self_hits, hits: hits, building_hits: building_hits, keys: keys };
     return new_game_state;
 }
@@ -335,7 +335,7 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
             let resource_count = new_game_state.resource_reserve.get(&taxed_resource).expect("No Resource in Reserve").clone();
             if resource_count > 0 {
                 new_game_state.resource_reserve.insert(taxed_resource.clone(), resource_count - 1);
-                new_game_state.next_turn_state = Some(new_game_state.turn_state.clone());
+                new_game_state.next_turn_states = vec![new_game_state.turn_state];
                 new_game_state.turn_state = TurnState::AllocateResource { resource: taxed_resource };
             }
         }

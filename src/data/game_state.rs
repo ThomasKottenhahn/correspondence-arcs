@@ -37,7 +37,7 @@ pub enum PreludeActionPayload {
 pub enum ResourceSlot {
     Used {keys: u8, resource: ResourceType},
     Unused {keys: u8},
-    Covered
+    Covered {keys: u8}
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -168,6 +168,24 @@ impl PlayerArea {
         PlayerArea { reserve: new_reserve, .. self.clone()}
     }
 
+    pub fn update_resource_slots(&self) -> (PlayerArea, Vec<ResourceType>) {
+        let blocked_slots = match self.reserve.get(&ReserveType::Cities).unwrap() {
+            5 => [false, false, true, true, true, true],
+            4 => [false, false, false, true, true, true],
+            3 => [false, false, false, false, true, true],
+            _ => [false, false, false, false, false, false],
+        };
+        let (new_resource_slots, overflow_resources): (Vec<_>, Vec<_>) = self.resource_slots.iter().zip(blocked_slots).map(|(slot, blocked)| {
+            match (slot, blocked) {
+                (ResourceSlot::Used { keys, resource }, true)                          => (ResourceSlot::Covered { keys: *keys }, Some(resource.clone())),
+                (ResourceSlot::Covered { keys }, false) | (ResourceSlot::Unused { keys }, false) => (ResourceSlot::Unused { keys: *keys }, None),
+                (ResourceSlot::Covered { keys }, true)  | (ResourceSlot::Unused { keys }, true)  => (ResourceSlot::Covered { keys: *keys }, None),
+                (ResourceSlot::Used { keys, resource }, false)                         => (ResourceSlot::Used { keys: *keys, resource: resource.clone() }, None)
+            }
+        }).unzip();
+        (PlayerArea { resource_slots: new_resource_slots, ..self.clone() }, overflow_resources.into_iter().filter_map(|o| o).collect())
+    }
+
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -213,7 +231,7 @@ pub struct GameState {
     pub seized: Option<Color>,
     pub zero_marker: bool,
     pub turn_state: TurnState,
-    pub next_turn_state: Option<TurnState>,
+    pub next_turn_states: Vec<TurnState>,
     pub chapter: u8,
     pub systems: Vec<System>,
     pub resource_reserve: HashMap<ResourceType, u8>,

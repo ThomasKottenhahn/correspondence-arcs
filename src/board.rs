@@ -2,7 +2,7 @@ use std::collections::{hash_map, HashMap};
 
 use crate::data::system::{System, SystemType, Ships, BuildingSlot, BuildingType};
 use crate::data::setup_cards::{SetupCard};
-use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ReserveType, ResourceType, TurnState};
+use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ReserveType, ResourceType, TurnState, ResourceSlot};
 
 use crate::actions::place_ships;
 use crate::actions::place_building;
@@ -99,8 +99,7 @@ fn setup_player_area(player_color: &Color) -> PlayerArea {
         action_cards: vec![],
         guild_cards: vec![],
         reserve: vec![(ReserveType::Ships, 15), (ReserveType::Agents, 10), (ReserveType::Starports, 5), (ReserveType::Cities, 5)].into_iter().collect(),
-        // TODO: resourceSlots
-        resource_slots: vec![],
+        resource_slots: vec![ResourceSlot::Unused { keys: 3 }, ResourceSlot::Unused { keys: 1 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 2 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 3 }],
         captives: vec![],
         tropies: vec![]
     }
@@ -222,7 +221,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         current_player: Color::Red,
         players_in_round: players.len() as u8,
         turn_state: TurnState::TrickTaking,
-        next_turn_state: None,
+        next_turn_states: vec![],
         initiative: Color::Red,
         seized: None,
         zero_marker: false,
