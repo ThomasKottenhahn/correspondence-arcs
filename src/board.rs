@@ -1,8 +1,8 @@
-use std::collections::hash_map;
+use std::collections::{hash_map, HashMap};
 
 use crate::data::system::{System, SystemType, Ships, BuildingSlot, BuildingType};
 use crate::data::setup_cards::{SetupCard};
-use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ResourceType, TurnState};
+use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ReserveType, ResourceType, TurnState};
 
 use crate::actions::place_ships;
 use crate::actions::place_building;
@@ -98,10 +98,7 @@ fn setup_player_area(player_color: &Color) -> PlayerArea {
         initiative: false,
         action_cards: vec![],
         guild_cards: vec![],
-        reserve_ships: 15,
-        reserve_agents: 10,
-        reserve_starports: 5,
-        reserve_cities: 5,
+        reserve: vec![(ReserveType::Ships, 15), (ReserveType::Agents, 10), (ReserveType::Starports, 5), (ReserveType::Cities, 5)].into_iter().collect(),
         // TODO: resourceSlots
         resource_slots: vec![],
         captives: vec![],

@@ -107,23 +107,28 @@ pub struct ActionCard{
     pub declared_ambition: Option<AmbitionTypes>
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum ReserveType {
+    Ships,
+    Agents,
+    Starports,
+    Cities
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlayerArea {
     pub player: Color,
     pub initiative: bool,
     pub action_cards: Vec<ActionCard>,
     pub guild_cards: Vec<Guild>,
-    pub reserve_ships: u8,
-    pub reserve_agents: u8,
-    pub reserve_starports: u8,
-    pub reserve_cities: u8,
+    pub reserve: HashMap<ReserveType,u8>,
     pub resource_slots: Vec<ResourceSlot>,
     pub captives: Vec<Agents>,
     pub tropies: Vec<Trophy>
 }
 
 impl PlayerArea {
-    pub fn add_trophies(& mut self, tropies: Vec<Trophy>){
+    pub fn add_trophies(&mut self, tropies: Vec<Trophy>) {
         let combined = tropies.iter().fold(self.tropies.clone(), {
             |mut acc, trophy| {
                 if let Some(existing) = acc.iter_mut().find(|t| t.trophy_type == trophy.trophy_type && t.player == trophy.player) {
@@ -137,7 +142,7 @@ impl PlayerArea {
         self.tropies = combined;
     }
 
-    pub fn add_action_cards(&mut self, cards: Vec<ActionCard>){
+    pub fn add_action_cards(&mut self, cards: Vec<ActionCard>) {
         self.action_cards.extend(cards);
     }
 
@@ -148,6 +153,11 @@ impl PlayerArea {
             None => panic!("Action Card does not exist: {:?} in {:?}", card, self.player),
         }
     }
+
+    pub fn change_reserve(&self, reserve_type: ReserveType, diff: i8) -> PlayerArea {
+        todo!()
+    }
+
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

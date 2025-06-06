@@ -2,7 +2,7 @@ use core::panic;
 
 use rand::Rng;
 
-use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BuildType, Color, Dice, GameState, Trophy, TrophyType, TurnState};
+use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BuildType, Color, Dice, GameState, ReserveType, Trophy, TrophyType, TurnState};
 use crate::data::court_cards::{CourtCard, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
@@ -316,14 +316,14 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
                 if controlled_by != &Some(game_state.current_player.clone()) {
                     panic!("Cannot tax a rival in a System controlled by another player");
                 }
-                let mut rivals_play_area = new_game_state.get_player_area(&target_player);
-                rivals_play_area.reserve_agents -= 1;
+                let rivals_play_area = new_game_state.get_player_area(&target_player).change_reserve(ReserveType::Agents, -1);
                 let mut current_player_area = new_game_state.get_player_area(&game_state.current_player);
                 current_player_area.add_trophies(vec![Trophy {
                     trophy_type: TrophyType::Agent,
                     count: 1,
                     player: target_player.clone(),
                 }]);
+                new_game_state.players.insert(target_player.clone(), rivals_play_area);
             }
             new_game_state.systems[target_system as usize] = new_game_state.systems[target_system as usize].use_building(&BuildingType::City, &target_player);
             
