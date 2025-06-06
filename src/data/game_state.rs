@@ -1,3 +1,4 @@
+use std::clone;
 use std::collections::HashMap;
 
 use super::court_cards::{CourtCard, VoxPayload, Guild};
@@ -155,7 +156,16 @@ impl PlayerArea {
     }
 
     pub fn change_reserve(&self, reserve_type: ReserveType, diff: i8) -> PlayerArea {
-        todo!()
+        let new_reserve = self.reserve.iter().map(|(k, v)| {
+            if k == &reserve_type {
+                let new_value = (*v as i8) + diff;
+                if new_value >= 0 {(k.clone(), new_value as u8)} else {panic!("Cannot take {:?} reserves from {:?} {:?}", -diff, v, k)}
+            }
+            else {
+            (k.clone(), v.clone())
+                }
+        }).collect();
+        PlayerArea { reserve: new_reserve, .. self.clone()}
     }
 
 }

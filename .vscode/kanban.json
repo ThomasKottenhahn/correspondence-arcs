@@ -1,0 +1,99 @@
+{
+    "title": "Kanban",
+    "cols": [
+        {
+            "title": "Bugs",
+            "tasks": [],
+            "id": "ol4p1rrmtituy4tx5dqlu8gh",
+            "color": "#eb144c"
+        },
+        {
+            "title": "To-Do",
+            "tasks": [
+                {
+                    "text": "Vox Actions",
+                    "id": "t4xgr7b38ysoqhj1k04xr6n9"
+                },
+                {
+                    "text": "Guild Cards Actions",
+                    "id": "kbrc8ixdvmod5dqm5n5y5ae8"
+                },
+                {
+                    "text": "Create Guild Cards",
+                    "id": "teocl5y2jcy9n53jnmq1ruvs"
+                },
+                {
+                    "text": "Allocate Dice Results",
+                    "id": "zkt64njan3f2pnhrbvnacvuh"
+                },
+                {
+                    "text": "Allocate Resources",
+                    "id": "q660pli0gzvgvxsspvr45v5r"
+                },
+                {
+                    "text": "Ambition Scoring",
+                    "id": "d144lsoibcijsu0dv41nwy4g"
+                },
+                {
+                    "text": "Prelude Actions",
+                    "id": "l8lxzt7uvejlicsguyu0fchq"
+                },
+                {
+                    "text": "Remove Immutability",
+                    "id": "ginfdpnotshdwdlkqnxae6w3"
+                }
+            ],
+            "id": "jfaf045ic9xf3sviz3l2dr0s",
+            "color": "#fcb900"
+        },
+        {
+            "title": "Doing",
+            "tasks": [
+                {
+                    "text": "Blocking ResourceSlots",
+                    "id": "aezypf9cu17amaos9gg03l5e"
+                }
+            ],
+            "id": "to0kc4sk1ozwmt77reeyi9e8",
+            "color": "#0693e3"
+        },
+        {
+            "title": "Untested",
+            "tasks": [
+                {
+                    "text": "Secure",
+                    "id": "kirijxvs5msbakmncqdz5wx4"
+                },
+                {
+                    "text": "Influence",
+                    "id": "aljbyz8gguuk3lcgafh1jnzs"
+                },
+                {
+                    "text": "Taxing Rivals",
+                    "id": "m1ne8a5x9g4exwffohc81wd4"
+                },
+                {
+                    "text": "Reserve Limits",
+                    "id": "r1wlvtwab3ssal82fvlh8yxx"
+                }
+            ],
+            "id": "crpwi6ycq8zaa3es3mijqlzr",
+            "color": "#00d084"
+        },
+        {
+            "title": "Testing",
+            "tasks": [],
+            "id": "td65keze3s2ehfwj7xz6ro4s",
+            "color": "#9900ef"
+        },
+        {
+            "title": "Done",
+            "tasks": [],
+            "id": "r2c7wwti7g00q6vvphhl7c38",
+            "color": "var(--vscode-editor-foreground)"
+        }
+    ],
+    "autosave": true,
+    "saveToFile": true,
+    "timestamp": 1749206268536
+}
