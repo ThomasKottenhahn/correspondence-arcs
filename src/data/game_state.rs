@@ -1,6 +1,8 @@
 use std::clone;
 use std::collections::HashMap;
 
+use crate::data::game_state;
+
 use super::court_cards::{CourtCard, VoxPayload, Guild};
 use super::system::{System};
 
@@ -155,9 +157,9 @@ impl PlayerArea {
         }
     }
 
-    pub fn change_reserve(&self, reserve_type: ReserveType, diff: i8) -> PlayerArea {
+    pub fn change_reserve(&self, reserve_type: &ReserveType, diff: i8) -> PlayerArea {
         let new_reserve = self.reserve.iter().map(|(k, v)| {
-            if k == &reserve_type {
+            if k == reserve_type {
                 let new_value = (*v as i8) + diff;
                 if new_value >= 0 {(k.clone(), new_value as u8)} else {panic!("Cannot take {:?} reserves from {:?} {:?}", -diff, v, k)}
             }
@@ -255,4 +257,40 @@ impl GameState {
         player_area.add_action_cards(cards);
         self.players.insert(color.clone(), player_area);
     }
+
+    pub fn update_players_reserve(&self, player: &Color, reserve_type: &ReserveType, diff: i8) -> GameState {
+        let new_players = self.players.iter().map(|(color, area)| {
+            if color == player {
+                (color.clone(), area.change_reserve(reserve_type, diff))
+            } else {
+                (color.clone(), area.clone())
+            }
+        }).collect();
+
+        GameState {
+            players: new_players,
+            .. self.clone()
+        }
+    }
+
+    pub fn redraw_court_cards(&self) -> GameState {
+        let max_court_cards = if self.players.len() == 2 {3} else {4};
+        let new_court = if self.court.len() < max_court_cards {
+            self.court.iter().chain(vec![&self.court_draw_pile[0]]).cloned().collect()
+        } else {self.court.clone()};
+
+        let new_draw_pile = if self.court.len() < max_court_cards {
+            self.court_draw_pile.iter().skip(1).cloned().collect()
+        } else {self.court_draw_pile.clone()};
+
+        let new_game_state = GameState {
+            court: new_court.clone(),
+            court_draw_pile: new_draw_pile.clone(),
+            .. self.clone()
+        };
+
+        if new_court.len() == max_court_cards || new_draw_pile.len() == 0 {return new_game_state;} else {return  new_game_state.redraw_court_cards();}
+        
+    }
+
 }

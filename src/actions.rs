@@ -311,12 +311,12 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
 
     match system {
         System::Unused => panic!("Cannot tax Unused System"),
-        System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to } => {
+        System::Used {system_type, controlled_by, .. } => {
             if tax_rival {
                 if controlled_by != &Some(game_state.current_player.clone()) {
                     panic!("Cannot tax a rival in a System controlled by another player");
                 }
-                let rivals_play_area = new_game_state.get_player_area(&target_player).change_reserve(ReserveType::Agents, -1);
+                let rivals_play_area = new_game_state.get_player_area(&target_player).change_reserve(&ReserveType::Agents, -1);
                 let mut current_player_area = new_game_state.get_player_area(&game_state.current_player);
                 current_player_area.add_trophies(vec![Trophy {
                     trophy_type: TrophyType::Agent,
@@ -430,7 +430,7 @@ fn play_lead_card(game_state: &GameState, card: ActionCard, declare: Option<Ambi
 }
 
 fn surpass(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {
-    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
+    let (lead_card, _, _) = game_state.lead_card.as_ref().expect("Cannot Surpass, if no lead card exists");
     if card.action_type != lead_card.action_type {panic!("Cannot surpass with other card type")}
     if card.number < lead_card.number {panic!("Cannot surpass with a lower card")};
     let mut new_game_state = game_state.clone();

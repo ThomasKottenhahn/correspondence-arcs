@@ -11,6 +11,26 @@
             "title": "To-Do",
             "tasks": [
                 {
+                    "text": "Vox: Call to Action",
+                    "id": "nyxpifplzw1wu4tpe15f0igj"
+                },
+                {
+                    "text": "Vox: Outrage Spreads",
+                    "id": "m2xsjvf0m97hg85xdrz5oe3j"
+                },
+                {
+                    "text": "Vox: Guild Struggle",
+                    "id": "r4ittdr2ydsy7t1zer1xmang"
+                },
+                {
+                    "text": "Vox: Song of Freedom",
+                    "id": "d6k5kialguga9jerauposnhr"
+                },
+                {
+                    "text": "Vox: Populist Demands",
+                    "id": "tnn9dipbixnz8s20fupcxmkc"
+                },
+                {
                     "text": "Guild Cards Actions",
                     "id": "kbrc8ixdvmod5dqm5n5y5ae8"
                 },
@@ -50,8 +70,8 @@
             "title": "Doing",
             "tasks": [
                 {
-                    "text": "Vox Actions",
-                    "id": "t4xgr7b38ysoqhj1k04xr6n9"
+                    "text": "Redraw Court Cards",
+                    "id": "fvkwmx8mls970d6qx4oy1qoe"
                 }
             ],
             "id": "to0kc4sk1ozwmt77reeyi9e8",
@@ -69,14 +89,6 @@
                     "id": "r1wlvtwab3ssal82fvlh8yxx"
                 },
                 {
-                    "text": "Secure",
-                    "id": "kirijxvs5msbakmncqdz5wx4"
-                },
-                {
-                    "text": "Influence",
-                    "id": "aljbyz8gguuk3lcgafh1jnzs"
-                },
-                {
                     "text": "Taxing Rivals",
                     "id": "m1ne8a5x9g4exwffohc81wd4"
                 }
@@ -86,7 +98,20 @@
         },
         {
             "title": "Testing",
-            "tasks": [],
+            "tasks": [
+                {
+                    "text": "Influence",
+                    "id": "aljbyz8gguuk3lcgafh1jnzs"
+                },
+                {
+                    "text": "Secure",
+                    "id": "kirijxvs5msbakmncqdz5wx4"
+                },
+                {
+                    "text": "Vox: Mass Uprising",
+                    "id": "rci7iw6pu1s0zzz16c0zqbye"
+                }
+            ],
             "id": "td65keze3s2ehfwj7xz6ro4s",
             "color": "#9900ef"
         },
@@ -99,5 +124,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1749239653936
+    "timestamp": 1749642212516
 }

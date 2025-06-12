@@ -1,11 +1,20 @@
-use std::collections::{hash_map, HashMap};
+use std::collections::{hash_map};
 
 use crate::data::system::{System, SystemType, Ships, BuildingSlot, BuildingType};
 use crate::data::setup_cards::{SetupCard};
 use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ReserveType, ResourceType, TurnState, ResourceSlot};
+use crate::data::court_cards::{create_court_deck};
 
 use crate::actions::place_ships;
 use crate::actions::place_building;
+
+pub fn get_cluster(system_id: u8) -> u8 {
+    match system_id {
+        0..6 => system_id,
+        6..24 => system_id/3 as u8,
+        _ => panic!()
+    }
+}
 
 fn create_reach(setup_card: &SetupCard) -> Vec<System> {
     let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow];
@@ -29,6 +38,10 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
                 j = j+1
             }
             connections.push((i+j)%6);
+
+            connections.push(6+3*i);
+            connections.push(7+3*i);
+            connections.push(8+3*i);
 
             if setup_card.cluster_out_of_play.contains(&i) {
                 System::Unused
@@ -216,6 +229,8 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         .map(|a| (a.clone(), Ambition {ambition_type: a.clone(), markers: vec![], discarded_resources: vec![]}))
         .collect();
 
+    let court_draw_pile = create_court_deck(all_colors);
+
     return GameState{
         players: players.clone().into_iter().map(|p| (p.player.clone(), p)).collect(),
         current_player: Color::Red,
@@ -230,11 +245,11 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         resource_reserve: resource_reserve,
         court: vec![],
         court_discard_pile: vec![],
-        court_draw_pile: vec![],
+        court_draw_pile: court_draw_pile,
         action_discard: vec![],
         lead_card: None,
         follow_cards: vec![],
         ambition_markers: ambition_markers,
         ambitions: ambitions  
-    };
+    }.redraw_court_cards();
 }
