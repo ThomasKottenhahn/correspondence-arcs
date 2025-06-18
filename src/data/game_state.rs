@@ -22,7 +22,7 @@ pub enum ResourceType {
     Relics,
     Psionics
 }
-
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PreludeActionPayload {
     Interest {target_resource: ResourceType, steal_from: Vec<(Color,u8)>},
     Steal {target_resource: ResourceType, target_player: ResourceType},
@@ -77,13 +77,7 @@ pub enum Dice{
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Action{
-    PlayLeadCard {card: ActionCard, declare: Option<AmbitionTypes>},
-    Pass,
-    Surpass {card: ActionCard, seize: Option<ActionCard>},
-    Copy {card: ActionCard, seize: Option<ActionCard>},
-    Pivot {card: ActionCard, seize: Option<ActionCard>},
-    EndPrelude,
+pub enum BasicAction{
     Build {target_system: u8, build_type: BuildType},
     Repair {target_system: u8, build_type: BuildType},
     Tax {target_system: u8, target_player: Color},
@@ -91,6 +85,20 @@ pub enum Action{
     Move {origin_id: u8, destination_id: u8, fresh_ships: u8, damaged_ships: u8},
     Secure {card_id: u8, vox_payload: Option<VoxPayload>},
     Battle {target_system: u8, target_player: Color, dice: Vec<Dice>},
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Action{
+    PlayLeadCard {card: ActionCard, declare: Option<AmbitionTypes>},
+    Pass,
+    Surpass {card: ActionCard, seize: Option<ActionCard>},
+    Copy {card: ActionCard, seize: Option<ActionCard>},
+    Pivot {card: ActionCard, seize: Option<ActionCard>},
+    PreludeResourceAction {baic_action: BasicAction, used_resource: u8},
+    UseWeapons {used_resource: u8},
+    PreludeCard {guild_card: u8, prelude_action_payload: PreludeActionPayload},
+    EndPrelude,
+    MainAction {basic_action: BasicAction},
     EndTurn
 }
 
@@ -291,6 +299,33 @@ impl GameState {
 
         if new_court.len() == max_court_cards || new_draw_pile.len() == 0 {return new_game_state;} else {return  new_game_state.redraw_court_cards();}
         
+    }
+
+    pub fn remove_resource(&self, player: &Color, resource_slot: u8) -> GameState {
+        let resource_slots = &self.players.get(&player).unwrap().resource_slots;
+        let current_slot = &resource_slots[resource_slot as usize];
+        let new_slots: Vec<ResourceSlot> = match current_slot {
+            ResourceSlot::Used { keys, resource } => resource_slots
+                .iter()
+                .enumerate()
+                .map(|(i, slot)| {
+                    if i == resource_slot as usize { ResourceSlot::Unused { keys: *keys } } else { slot.clone() }
+                })
+                .collect(),
+            _ => panic!("Cannot remove resource from a non-used slot: {:?}", current_slot)
+        };
+        let new_players = self.players.iter().map(|(color, area)| {
+            if color == player {
+                (color.clone(), PlayerArea { resource_slots: new_slots.clone(), ..area.clone() })
+            } else {
+                (color.clone(), area.clone())
+            }
+        }).collect();
+
+        GameState {
+            players: new_players,
+            ..self.clone()
+        }
     }
 
 }

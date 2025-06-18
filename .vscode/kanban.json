@@ -87,10 +87,6 @@
                 {
                     "text": "Reserve Limits",
                     "id": "r1wlvtwab3ssal82fvlh8yxx"
-                },
-                {
-                    "text": "Taxing Rivals",
-                    "id": "m1ne8a5x9g4exwffohc81wd4"
                 }
             ],
             "id": "crpwi6ycq8zaa3es3mijqlzr",
@@ -99,10 +95,6 @@
         {
             "title": "Testing",
             "tasks": [
-                {
-                    "text": "Influence",
-                    "id": "aljbyz8gguuk3lcgafh1jnzs"
-                },
                 {
                     "text": "Secure",
                     "id": "kirijxvs5msbakmncqdz5wx4"
@@ -117,12 +109,21 @@
         },
         {
             "title": "Done",
-            "tasks": [],
+            "tasks": [
+                {
+                    "text": "Influence",
+                    "id": "aljbyz8gguuk3lcgafh1jnzs"
+                },
+                {
+                    "text": "Taxing Rivals",
+                    "id": "m1ne8a5x9g4exwffohc81wd4"
+                }
+            ],
             "id": "r2c7wwti7g00q6vvphhl7c38",
             "color": "var(--vscode-editor-foreground)"
         }
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1749642212516
+    "timestamp": 1750232643829
 }

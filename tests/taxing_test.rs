@@ -2,7 +2,7 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{SetupCard, two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, Color, GameState, ReserveType, ResourceType, TurnState};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BasicAction, Color, GameState, ReserveType, ResourceType, TurnState};
     use correspondence_arcs::data::system::{Ships, System, SystemType, BuildingSlot, BuildingType};
     use correspondence_arcs::board;
     use correspondence_arcs::actions;
@@ -19,7 +19,7 @@ mod test{
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Administration, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Tax { target_system: target_system, target_player: Color::Red }
+            Action::MainAction {basic_action: BasicAction::Tax { target_system: target_system, target_player: Color::Red }}
         ]);
 
         assert_eq!(new_game_state.turn_state, TurnState::AllocateResource { resource: ResourceType::Psionics });
@@ -57,9 +57,9 @@ mod test{
         let g1 = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Move { origin_id: 17, destination_id: 3, fresh_ships: 3, damaged_ships: 0 },
-            Action::Move { origin_id: 3, destination_id: 2, fresh_ships: 3, damaged_ships: 0 },
-            Action::Move { origin_id: 2, destination_id: 12, fresh_ships: 3, damaged_ships: 0 }
+            Action::MainAction {basic_action: BasicAction::Move { origin_id: 17, destination_id: 3, fresh_ships: 3, damaged_ships: 0 }},
+            Action::MainAction {basic_action: BasicAction::Move { origin_id: 3, destination_id: 2, fresh_ships: 3, damaged_ships: 0 }},
+            Action::MainAction {basic_action: BasicAction::Move { origin_id: 2, destination_id: 12, fresh_ships: 3, damaged_ships: 0 }}
         ]);
 
         assert_eq!(g1.systems[target_system as usize], System::Used {
@@ -75,7 +75,7 @@ mod test{
             Action::EndTurn,
             Action::Copy { card: ActionCard { action_type: ActionType::Mobilization, number: 6, pips: 2, declared_ambition: Some(AmbitionTypes::Empath) }, seize: None },
             Action::EndPrelude,
-            Action::Move { origin_id: 12, destination_id: 13, fresh_ships: 1, damaged_ships: 0 },
+            Action::MainAction {basic_action: BasicAction::Move { origin_id: 12, destination_id: 13, fresh_ships: 1, damaged_ships: 0 }},
             Action::EndTurn,
         ]);
 
@@ -95,7 +95,7 @@ mod test{
         let g3 = actions::execute_actions(&g2, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Administration, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Tax { target_system: target_system, target_player: Color::Blue }
+            Action::MainAction {basic_action: BasicAction::Tax { target_system: target_system, target_player: Color::Blue }}
             ]);
 
         assert_eq!(g3.turn_state, TurnState::AllocateResource { resource: ResourceType::Material });

@@ -2,7 +2,7 @@
 mod test {
     use correspondence_arcs::data::setup_cards::{SetupCard, two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{GameState, TurnState, ActionCard, Action, ActionType, AmbitionTypes, Color, Dice};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BasicAction, Color, Dice, GameState, TurnState};
 
     use correspondence_arcs::board;
     use correspondence_arcs::actions;
@@ -20,7 +20,7 @@ mod test {
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Battle { target_system: 15, target_player: Color::Blue, dice: vec![Dice::Skirmish] }
+            Action::MainAction { basic_action: BasicAction::Battle { target_system: 15, target_player: Color::Blue, dice: vec![Dice::Skirmish] }}
         ]);
 
         match new_game_state.turn_state {
@@ -52,7 +52,7 @@ mod test {
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Battle { target_system: 15, target_player: Color::Blue, dice: vec![Dice::Skirmish,Dice::Skirmish,Dice::Skirmish] }
+            Action::MainAction { basic_action: BasicAction::Battle { target_system: 15, target_player: Color::Blue, dice: vec![Dice::Skirmish,Dice::Skirmish,Dice::Skirmish] }}
         ]);
 
         match new_game_state.turn_state {
@@ -88,7 +88,7 @@ mod test {
         let _ = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Battle { target_system: 15, target_player: Color::Blue, dice: vec![Dice::Skirmish,Dice::Skirmish] }
+            Action::MainAction { basic_action: BasicAction::Battle { target_system: 15, target_player: Color::Blue, dice: vec![Dice::Skirmish,Dice::Skirmish] }}
         ]);
     }
 
@@ -105,7 +105,7 @@ mod test {
         let _ = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Battle { target_system: 16, target_player: Color::Blue, dice: vec![Dice::Skirmish] }
+            Action::MainAction { basic_action: BasicAction::Battle { target_system: 16, target_player: Color::Blue, dice: vec![Dice::Skirmish] }}
         ]);
     }
 

@@ -8,9 +8,6 @@ use crate::board::get_cluster;
 
 use itertools::Itertools;
 
-use shuffle::shuffler::Shuffler;
-use shuffle::irs::{self, Irs};
-use rand::rngs::mock::StepRng;
 use rand::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

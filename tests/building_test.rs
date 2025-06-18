@@ -2,7 +2,7 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{SetupCard, two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BuildType, Color, GameState, ResourceType};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BasicAction, BuildType, Color, GameState, ResourceType};
     use correspondence_arcs::data::system::{BuildingSlot, BuildingType, Ships, System, SystemType};
     
     use correspondence_arcs::board;
@@ -21,7 +21,7 @@ mod test{
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Build { target_system: target_system, build_type: build_type }
+            Action::MainAction {basic_action: BasicAction::Build { target_system: target_system, build_type: build_type }}
         ]);
 
         match &new_game_state.systems[target_system as usize] {
@@ -50,7 +50,7 @@ mod test{
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Build { target_system: target_system, build_type: build_type }
+            Action::MainAction {basic_action: BasicAction::Build { target_system: target_system, build_type: build_type }}
         ]);
 
         match &new_game_state.systems[target_system as usize] {
@@ -77,7 +77,7 @@ mod test{
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Build { target_system: target_system, build_type: build_type }
+            Action::MainAction {basic_action: BasicAction::Build { target_system: target_system, build_type: build_type }}
         ]);      
 
         match &new_game_state.systems[target_system as usize] {
@@ -105,7 +105,7 @@ mod test{
         let new_game_state = actions::execute_actions(&g2, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Build { target_system: target_system, build_type: build_type }
+            Action::MainAction {basic_action: BasicAction::Build { target_system: target_system, build_type: build_type }}
         ]);
 
         match &new_game_state.systems[target_system as usize] {
@@ -133,7 +133,7 @@ mod test{
         let _ = actions::execute_actions(&g1, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Build { target_system: target_system, build_type: build_type }
+            Action::MainAction {basic_action: BasicAction::Build { target_system: target_system, build_type: build_type }}
         ]);
     }
 
@@ -151,7 +151,7 @@ mod test{
         let _ = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Build { target_system: target_system, build_type: build_type }
+            Action::MainAction {basic_action: BasicAction::Build { target_system: target_system, build_type: build_type }}
         ]);
     }
 }

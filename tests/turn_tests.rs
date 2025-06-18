@@ -2,7 +2,7 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, Ambition, AmbitionMarker, AmbitionTypes, BuildType, Color, GameState, ResourceType, TurnState};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, Ambition, AmbitionMarker, AmbitionTypes, BasicAction, BuildType, Color, GameState, ResourceType, TurnState};
     use correspondence_arcs::data::system::{BuildingSlot, BuildingType, Ships, System, SystemType};
     
     use correspondence_arcs::board;
@@ -27,7 +27,7 @@ mod test{
         let g1: GameState = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Move { origin_id: 17, destination_id: 16, fresh_ships: 2, damaged_ships: 0 },
+            Action::MainAction { basic_action: BasicAction::Move { origin_id: 17, destination_id: 16, fresh_ships: 2, damaged_ships: 0 } },
             Action::EndTurn
         ]);
 
@@ -38,7 +38,7 @@ mod test{
         let g2: GameState = actions::execute_actions(&g1, vec![
             Action::Pivot { card: ActionCard { action_type: ActionType::Construction, number: 3, pips: 3, declared_ambition: Some(AmbitionTypes::Tyrant) }, seize: None },
             Action::EndPrelude,
-            Action::Build { target_system: 18, build_type: BuildType::Ship },
+            Action::MainAction {basic_action: BasicAction::Build { target_system: 18, build_type: BuildType::Ship }},
             Action::EndTurn
         ]);
 
@@ -48,14 +48,14 @@ mod test{
         let g3: GameState = actions::execute_actions(&g2, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
-            Action::Build { target_system: 16, build_type: BuildType::Starport },
+            Action::MainAction {basic_action: BasicAction::Build { target_system: 16, build_type: BuildType::Starport }},
             Action::EndTurn
         ]);
 
         let g4: GameState = actions::execute_actions(&g3, vec![
             Action::Surpass { card: ActionCard { action_type: ActionType::Construction, number: 6, pips: 2, declared_ambition: Some(AmbitionTypes::Empath) }, seize: None },
             Action::EndPrelude,
-            Action::Build { target_system: 18, build_type: BuildType::Ship }
+            Action::MainAction {basic_action: BasicAction::Build { target_system: 18, build_type: BuildType::Ship }}
         ]);
 
         let g4 = actions::execute_action(&g4, Action::EndTurn);

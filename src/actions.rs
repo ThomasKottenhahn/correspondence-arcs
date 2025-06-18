@@ -2,7 +2,7 @@ use core::panic;
 
 use rand::Rng;
 
-use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BuildType, Color, Dice, GameState, ReserveType, Trophy, TrophyType, TurnState};
+use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, ReserveType, ResourceSlot, ResourceType, Trophy, TrophyType, TurnState};
 use crate::data::court_cards::{CourtCard, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
@@ -360,6 +360,10 @@ fn declare_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameStat
     }
 }
 
+fn execute_prelude_action(game_state: &GameState, action: Action) -> GameState {
+    todo!()
+}
+
 fn end_chapter(game_state: &GameState) -> GameState {
     //Evaluate Ambitions
     println!("End Chapter");
@@ -507,35 +511,33 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
         TurnState::Actions { action_type, pips_left } => {
             if action == Action::EndTurn {return end_turn(game_state)}
             if *pips_left == 0 {panic!("No Action pips left in {:?}, when executing {:?}", game_state.turn_state, action)}
-            match action_type {
-                ActionType::Administration => match action {
-                    Action::Repair { target_system, build_type } => repair(&use_action_pip(&game_state), target_system, build_type),
-                    Action::Tax { target_system, target_player } => tax(&use_action_pip(&game_state), target_system, target_player),
-                    Action::Influence { card_id } => influence(&use_action_pip(&game_state), card_id),
-                    Action::EndTurn => end_turn(game_state),
-                    _ => panic!("Cannot execute Action with Administration Action Card")
-            },
-                ActionType::Agression =>  match action {
-                    Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
-                    Action::Secure { card_id , vox_payload} => secure(&use_action_pip(&game_state), card_id, vox_payload),
-                    Action::Battle { target_system, target_player, dice } => battle(&use_action_pip(&game_state), target_system, target_player, dice),
-                    Action::EndTurn => end_turn(game_state),
+            return match (action_type, action) {
+                (ActionType::Administration, Action::MainAction { basic_action }) => match basic_action {
+                    BasicAction::Repair { target_system, build_type } => repair(&use_action_pip(&game_state), target_system, build_type),
+                    BasicAction::Tax { target_system, target_player } => tax(&use_action_pip(&game_state), target_system, target_player),
+                    BasicAction::Influence { card_id } => influence(&use_action_pip(&game_state), card_id),
+                    _ => panic!("Cannot execute Action with Administration Action Card")                    
+                },
+                (ActionType::Agression, Action::MainAction { basic_action }) => match basic_action {
+                    BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
+                    BasicAction::Secure { card_id , vox_payload} => secure(&use_action_pip(&game_state), card_id, vox_payload),
+                    BasicAction::Battle { target_system, target_player, dice } => battle(&use_action_pip(&game_state), target_system, target_player, dice),
                     _ => panic!("Cannot execute Action with Aggresion Action Card")
-            },
-                ActionType::Construction => match action {
-                    Action::Build {target_system, build_type} => build(&use_action_pip(&game_state), target_system, build_type),
-                    Action::Repair { target_system, build_type } => repair(&use_action_pip(&game_state), target_system, build_type),
-                    Action::EndTurn => end_turn(game_state),
-                    _ => panic!("Cannot execute Action with Construction Action Card")
-            },
-                ActionType::Mobilization => match action {
-                    Action::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
-                    Action::Influence { card_id } => influence(&use_action_pip(&game_state), card_id),
-                    Action::EndTurn => end_turn(game_state),
-                    _ => panic!("Cannot execute Action with Mobilization Action Card")
+                },
+                (ActionType::Construction, Action::MainAction { basic_action }) => match basic_action {
+                    BasicAction::Build { target_system, build_type } => build(&use_action_pip(game_state), target_system, build_type),
+                    BasicAction::Repair { target_system, build_type } => repair(&use_action_pip(&game_state), target_system, build_type),
+                    _ => panic!("Cannot execute Action with Aggresion Action Card")                    
+                },
+                (ActionType::Mobilization, Action::MainAction { basic_action }) => match basic_action {
+                    BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
+                    BasicAction::Influence { card_id } => influence(&use_action_pip(&game_state), card_id),
+                    _ => panic!("Cannot execute Action with Mobilization Action Card")                    
+                },
+                (_ , Action::EndTurn) => todo!(),
+                _ => panic!("")
             }
-            }
-        },
+        }
         TurnState::AllocateResource { resource } => todo!(),
         TurnState::AllocateDiceResults { target_system, target_player, self_hits, hits, building_hits, keys } => todo!(),
     }
