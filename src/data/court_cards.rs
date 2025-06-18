@@ -8,6 +8,11 @@ use crate::board::get_cluster;
 
 use itertools::Itertools;
 
+use shuffle::shuffler::Shuffler;
+use shuffle::irs::{self, Irs};
+use rand::rngs::mock::StepRng;
+use rand::prelude::*;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CourtCard {
     VoxCard {vox: Vox, agents: Vec<Agents> },
@@ -37,9 +42,13 @@ impl CourtCard {
     }
 }
 
+fn dummy_function_prelude(_game_state: &GameState, _payload: PreludeActionPayload) -> GameState {
+    panic!("This function should not be called, it is a placeholder for the PreludeActionPayload");
+}
+
 pub fn create_court_deck(players: Vec<Color>) -> Vec<CourtCard> {
     let agents: Vec<Agents> = players.iter().map(|color| Agents { color: color.clone(), count: 0 }).collect();
-    vec![
+    let mut court = vec![
         CourtCard::VoxCard {
             vox: Vox {
                 title: "Mass Uprising".to_string(),
@@ -47,8 +56,236 @@ pub fn create_court_deck(players: Vec<Color>) -> Vec<CourtCard> {
                 on_secure: mass_uprising
             },
             agents: agents.clone()
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Loyal Engineers".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Material, 
+                keys: 3, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Mining_Interest".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Material, 
+                keys: 2,
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Material Cartel".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Material, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Admin Union".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Material, 
+                keys: 2,
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Construction Union".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Material, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Fuel Cartel".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Fuel, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Loyal Pilots".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Fuel, 
+                keys: 3, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Gate Keepers".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Fuel, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Shipping Interests".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Fuel, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Spacing Union".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Fuel, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Arms Union".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Weapons, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Prison Wardens".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Weapons, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Skirmishers".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Weapons, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Court Enforcers".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Weapons, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Loyal Marines".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Weapons, 
+                keys: 3, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Lattice Spies".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Psionics, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Farseers".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Psionics, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Secret Order".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Psionics, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Silver Tounges".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Psionics, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Loyal Empaths".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Psionics, 
+                keys: 3, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Loyal Keepers".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Relics, 
+                keys: 3, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Sworn Guardians".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Relics, 
+                keys: 1,
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Elder Broker".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Relics, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Relic Fence".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Relics, 
+                keys: 2, 
+                prelude_action: None },
+            agents: agents.clone() 
+        },
+        CourtCard::GuildCard { 
+            guild: Guild { 
+                title: "Galactic Bards".to_string(), 
+                description: "".to_string(), 
+                resource: ResourceType::Relics, 
+                keys: 1, 
+                prelude_action: None },
+            agents: agents.clone() 
         }
-    ]
+    ];
+    let mut rng = StdRng::seed_from_u64(42);
+    court.shuffle(&mut rng);
+    return court;
 }
 
 fn mass_uprising(game_state: &GameState, vox_payload: VoxPayload) -> GameState {
@@ -113,7 +350,7 @@ pub struct Guild {
     description: String,
     resource: ResourceType,
     keys: u8,
-    prelude_action: fn(&GameState, PreludeActionPayload) -> GameState
+    prelude_action: Option<fn(&GameState, PreludeActionPayload) -> GameState>
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

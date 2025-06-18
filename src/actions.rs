@@ -236,7 +236,7 @@ fn influence(game_state: &GameState, target_card: u8) -> GameState {
             else {a.clone()}
         }).collect()},
     };
-    return new_game_state;
+    return new_game_state.update_players_reserve(&current_player, &ReserveType::Agents, -1);
 }
 
 fn battle(game_state: &GameState, target_system: u8, target_player: Color, dice: Vec<Dice>) -> GameState {
@@ -377,7 +377,7 @@ fn end_round(game_state: &GameState) -> GameState {
     new_game_state.initiative =  match new_game_state.seized.clone() {
         Some(c) => c,
         None => {
-            game_state.follow_cards.iter().chain(vec![lead]).filter(|(c, _, _)| c.action_type == lead.0.action_type).max_by_key(|(c, _, _)| c.number).unwrap().2.clone()
+            game_state.follow_cards.iter().chain(vec![lead]).filter(|(c, f, _)| c.action_type == lead.0.action_type && *f).max_by_key(|(c, _, _)| c.number).unwrap().2.clone()
         }
     };
 

@@ -80,12 +80,13 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
                 
                 // Gate connection
                 let mut connections = vec![(i/3) as u8];
-                // adjacent Planets
-                if i != 0 {if i/3 == (i-1)/3 {connections.push((i+5) as u8)}}
-                if i/3 == (i+1)/3 {connections.push((i+7) as u8)}
                 
-                // Special Borders
+                // Planets before
                 if (i == 5 || i == 14) && !setup_card.cluster_out_of_play.contains(&(((i+1)/3)as u8)) {connections.push((i+7) as u8)}
+                if i != 0 {if i/3 == (i-1)/3 {connections.push((i+5) as u8)}}
+                
+                // Planets after
+                if i/3 == (i+1)/3 {connections.push((i+7) as u8)}
                 if (i == 6 || i == 15) && !setup_card.cluster_out_of_play.contains(&(((i-1)/3)as u8)) {connections.push((i+5) as u8)}
                 
                 System::Used {

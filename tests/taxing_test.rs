@@ -2,7 +2,7 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{SetupCard, two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{GameState, TurnState, ResourceType, ActionCard, Action, ActionType, AmbitionTypes, Color};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, Color, GameState, ReserveType, ResourceType, TurnState};
     use correspondence_arcs::data::system::{Ships, System, SystemType, BuildingSlot, BuildingType};
     use correspondence_arcs::board;
     use correspondence_arcs::actions;
@@ -35,6 +35,71 @@ mod test{
                 assert_eq!(connects_to, vec![4,19]);
             },
         }
+
+    }
+
+    #[test]
+    fn test_tax_rival_city() {
+        let test_setup: SetupCard = two_player_frontiers();
+        let mut game_state: GameState = board::setup_game(&test_setup);
+
+        
+        game_state.add_action_cards(&Color::Red, vec![
+            ActionCard { action_type: ActionType::Administration, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) },
+            ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }
+            ]);
+        game_state.add_action_cards(&Color::Blue, vec![
+            ActionCard { action_type: ActionType::Mobilization, number: 6, pips: 2, declared_ambition: Some(AmbitionTypes::Empath) }
+        ]);
+
+        let target_system = 12;
+
+        let g1 = actions::execute_actions(&game_state, vec![
+            Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Mobilization, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
+            Action::EndPrelude,
+            Action::Move { origin_id: 17, destination_id: 3, fresh_ships: 3, damaged_ships: 0 },
+            Action::Move { origin_id: 3, destination_id: 2, fresh_ships: 3, damaged_ships: 0 },
+            Action::Move { origin_id: 2, destination_id: 12, fresh_ships: 3, damaged_ships: 0 }
+        ]);
+
+        assert_eq!(g1.systems[target_system as usize], System::Used {
+            system_id: target_system,
+            system_type: SystemType::Planet { resource: ResourceType::Material },
+            building_slots: vec![BuildingSlot::Occupied { fresh: true, player: Color::Blue, building_type: BuildingType::City, used: false }],
+            ships: vec![Ships{player: Color::Red, fresh: 3, damaged: 0}, Ships{player: Color::Blue, fresh: 3, damaged: 0}],
+            controlled_by: None,
+            connects_to: vec![2, 13, 11]
+        });
+
+        let g2 = actions::execute_actions(&g1, vec![
+            Action::EndTurn,
+            Action::Copy { card: ActionCard { action_type: ActionType::Mobilization, number: 6, pips: 2, declared_ambition: Some(AmbitionTypes::Empath) }, seize: None },
+            Action::EndPrelude,
+            Action::Move { origin_id: 12, destination_id: 13, fresh_ships: 1, damaged_ships: 0 },
+            Action::EndTurn,
+        ]);
+
+        assert_eq!(g2.systems[target_system as usize], System::Used {
+            system_id: target_system,
+            system_type: SystemType::Planet { resource: ResourceType::Material },
+            building_slots: vec![BuildingSlot::Occupied { fresh: true, player: Color::Blue, building_type: BuildingType::City, used: false }],
+            ships: vec![Ships{player: Color::Red, fresh: 3, damaged: 0}, Ships{player: Color::Blue, fresh: 2, damaged: 0}],
+            controlled_by: Some(Color::Red),
+            connects_to: vec![2, 13, 11]
+        });
+
+        assert_eq!(g2.turn_state, TurnState::TrickTaking);
+        assert_eq!(g2.current_player, Color::Red);
+        assert_eq!(g2.initiative, Color::Red);
+
+        let g3 = actions::execute_actions(&g2, vec![
+            Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Administration, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
+            Action::EndPrelude,
+            Action::Tax { target_system: target_system, target_player: Color::Blue }
+            ]);
+
+        assert_eq!(g3.turn_state, TurnState::AllocateResource { resource: ResourceType::Material });
+        assert_eq!(g3.players.get(&Color::Blue).unwrap().reserve.get(&ReserveType::Agents), Some(&9));
 
     }
 
