@@ -2,7 +2,7 @@ use core::panic;
 
 use rand::Rng;
 
-use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, ReserveType, ResourceSlot, ResourceType, Trophy, TrophyType, TurnState};
+use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, ReserveType, ResourceType, Trophy, TrophyType, TurnState};
 use crate::data::court_cards::{CourtCard, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
@@ -360,8 +360,21 @@ fn declare_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameStat
     }
 }
 
-fn execute_prelude_action(game_state: &GameState, action: Action) -> GameState {
-    todo!()
+fn execute_prelude_action(game_state: &GameState, action: BasicAction, resource: Option<ResourceType>) -> GameState {
+    match (action.clone(), resource.clone().expect("No Resource in ResourceSlot"), game_state.lead_card.clone().unwrap().0.action_type) {
+        (BasicAction::Build { target_system, build_type }, ResourceType::Material, _) => build(game_state, target_system, build_type),
+        (BasicAction::Build { target_system, build_type }, ResourceType::Psionics, ActionType::Construction) => build(game_state, target_system, build_type),
+        (BasicAction::Repair { target_system, build_type }, ResourceType::Material, _) => repair(game_state, target_system, build_type),
+        (BasicAction::Repair { target_system, build_type }, ResourceType::Psionics, ActionType::Mobilization) => repair(game_state, target_system, build_type),
+        (BasicAction::Tax { target_system, target_player }, ResourceType::Psionics, ActionType::Administration) => tax(game_state, target_system, target_player),
+        (BasicAction::Influence { card_id }, ResourceType::Psionics, ActionType::Administration | ActionType::Mobilization) => influence(game_state, card_id),
+        (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Fuel, _) => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+        (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Psionics, ActionType::Agression | ActionType::Mobilization) => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+        (BasicAction::Secure { card_id, vox_payload }, ResourceType::Relics, _) => secure(game_state, card_id, vox_payload),
+        (BasicAction::Secure { card_id, vox_payload }, ResourceType::Psionics, ActionType::Agression) => secure(game_state, card_id, vox_payload),
+        (BasicAction::Battle { target_system, target_player, dice }, ResourceType::Psionics, ActionType::Agression) => battle(game_state, target_system, target_player, dice),
+        _ => panic!("Cannot execute {:?} with {:?} resource and {:?} lead", action.clone(), resource.clone(), game_state.lead_card.clone().unwrap().0.action_type)
+    }
 }
 
 fn end_chapter(game_state: &GameState) -> GameState {
@@ -505,7 +518,14 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                     new_game_state.turn_state = TurnState::Actions { action_type: action_type.clone(), pips_left: pips_left.clone() };
                     new_game_state
                 },
-                _ => todo!()
+                Action::PreludeResourceAction { basic_action, used_resource } => execute_prelude_action(
+                    game_state,
+                    basic_action,
+                    game_state.players.get(&game_state.current_player).unwrap().get_resource(used_resource)
+                ),
+                Action::UseWeapons { used_resource } => todo!(),
+                Action::PreludeCard { guild_card, prelude_action_payload } => todo!(),
+                _ => panic!("Cannot execute {:?} in Prelude", action)
             }
         },
         TurnState::Actions { action_type, pips_left } => {

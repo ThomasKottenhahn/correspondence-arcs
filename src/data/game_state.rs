@@ -94,7 +94,7 @@ pub enum Action{
     Surpass {card: ActionCard, seize: Option<ActionCard>},
     Copy {card: ActionCard, seize: Option<ActionCard>},
     Pivot {card: ActionCard, seize: Option<ActionCard>},
-    PreludeResourceAction {baic_action: BasicAction, used_resource: u8},
+    PreludeResourceAction {basic_action: BasicAction, used_resource: u8},
     UseWeapons {used_resource: u8},
     PreludeCard {guild_card: u8, prelude_action_payload: PreludeActionPayload},
     EndPrelude,
@@ -176,6 +176,29 @@ impl PlayerArea {
                 }
         }).collect();
         PlayerArea { reserve: new_reserve, .. self.clone()}
+    }
+
+    pub fn remove_resource(&self, resource_slot: u8, target_resource: &ResourceType) -> PlayerArea {
+        let new_resource_slots: Vec<ResourceSlot>= self.resource_slots.iter().enumerate().map(|(i, r)| {
+            if i == resource_slot as usize {
+            match r {
+                ResourceSlot::Used { keys, resource } if resource == target_resource => ResourceSlot::Unused { keys: *keys },
+                _ => panic!("Cannot remove {:?} from {:?}", target_resource, r)
+            }} else {
+                r.clone()
+            }
+        }).collect();
+        PlayerArea {
+            resource_slots: new_resource_slots,
+            .. self.clone()
+        }
+    }
+
+    pub fn get_resource(&self, resource_slot: u8) -> Option<ResourceType> {
+        match &self.resource_slots[resource_slot as usize] {
+            ResourceSlot::Used { resource, .. } => Some(resource.clone()),
+            _ => None,
+        }
     }
 
     pub fn update_resource_slots(&self) -> (PlayerArea, Vec<ResourceType>) {
@@ -301,22 +324,10 @@ impl GameState {
         
     }
 
-    pub fn remove_resource(&self, player: &Color, resource_slot: u8) -> GameState {
-        let resource_slots = &self.players.get(&player).unwrap().resource_slots;
-        let current_slot = &resource_slots[resource_slot as usize];
-        let new_slots: Vec<ResourceSlot> = match current_slot {
-            ResourceSlot::Used { keys, resource } => resource_slots
-                .iter()
-                .enumerate()
-                .map(|(i, slot)| {
-                    if i == resource_slot as usize { ResourceSlot::Unused { keys: *keys } } else { slot.clone() }
-                })
-                .collect(),
-            _ => panic!("Cannot remove resource from a non-used slot: {:?}", current_slot)
-        };
+    pub fn remove_resource(&self, player: &Color, resource_slot: u8, target_resource: ResourceType) -> GameState {
         let new_players = self.players.iter().map(|(color, area)| {
             if color == player {
-                (color.clone(), PlayerArea { resource_slots: new_slots.clone(), ..area.clone() })
+                (color.clone(), area.remove_resource(resource_slot, &target_resource))
             } else {
                 (color.clone(), area.clone())
             }

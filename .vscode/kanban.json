@@ -43,20 +43,12 @@
                     "id": "zkt64njan3f2pnhrbvnacvuh"
                 },
                 {
-                    "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
-                    "id": "z5pg8rkwufgci0l7i3miatys"
-                },
-                {
                     "text": "Allocate Resources",
                     "id": "q660pli0gzvgvxsspvr45v5r"
                 },
                 {
                     "text": "Ambition Scoring",
                     "id": "d144lsoibcijsu0dv41nwy4g"
-                },
-                {
-                    "text": "Prelude Actions",
-                    "id": "l8lxzt7uvejlicsguyu0fchq"
                 },
                 {
                     "text": "Remove Immutability",
@@ -70,8 +62,8 @@
             "title": "Doing",
             "tasks": [
                 {
-                    "text": "Redraw Court Cards",
-                    "id": "fvkwmx8mls970d6qx4oy1qoe"
+                    "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
+                    "id": "z5pg8rkwufgci0l7i3miatys"
                 }
             ],
             "id": "to0kc4sk1ozwmt77reeyi9e8",
@@ -87,6 +79,10 @@
                 {
                     "text": "Reserve Limits",
                     "id": "r1wlvtwab3ssal82fvlh8yxx"
+                },
+                {
+                    "text": "Prelude Actions",
+                    "id": "l8lxzt7uvejlicsguyu0fchq"
                 }
             ],
             "id": "crpwi6ycq8zaa3es3mijqlzr",
@@ -117,6 +113,10 @@
                 {
                     "text": "Taxing Rivals",
                     "id": "m1ne8a5x9g4exwffohc81wd4"
+                },
+                {
+                    "text": "Redraw Court Cards",
+                    "id": "fvkwmx8mls970d6qx4oy1qoe"
                 }
             ],
             "id": "r2c7wwti7g00q6vvphhl7c38",
@@ -125,5 +125,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1750232643829
+    "timestamp": 1750362937221
 }
