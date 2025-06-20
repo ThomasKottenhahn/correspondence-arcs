@@ -22,7 +22,7 @@ mod test{
             Action::MainAction {basic_action: BasicAction::Tax { target_system: target_system, target_player: Color::Red }}
         ]);
 
-        assert_eq!(new_game_state.turn_state, TurnState::AllocateResource { resource: ResourceType::Psionics });
+        assert_eq!(new_game_state.turn_state, TurnState::AllocateResources { player: Color::Red, resources: vec![ResourceType::Psionics] });
         
         match new_game_state.systems[target_system as usize].clone() {
             System::Unused => panic!("System should not be unused"),
@@ -98,7 +98,7 @@ mod test{
             Action::MainAction {basic_action: BasicAction::Tax { target_system: target_system, target_player: Color::Blue }}
             ]);
 
-        assert_eq!(g3.turn_state, TurnState::AllocateResource { resource: ResourceType::Material });
+        assert_eq!(g3.turn_state, TurnState::AllocateResources { player: Color::Red, resources: vec![ResourceType::Material] });
         assert_eq!(g3.players.get(&Color::Blue).unwrap().reserve.get(&ReserveType::Agents), Some(&9));
 
     }

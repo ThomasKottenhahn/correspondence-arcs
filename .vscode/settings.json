@@ -5,6 +5,6 @@
         "markdown": false,
         "scminput": false,
         "python": false,
-        "rust": true
+        "rust": false
     }
 }

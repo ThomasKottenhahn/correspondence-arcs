@@ -99,6 +99,7 @@ pub enum Action{
     PreludeCard {guild_card: u8, prelude_action_payload: PreludeActionPayload},
     EndPrelude,
     MainAction {basic_action: BasicAction},
+    AllocateResources {configuration: Vec<(u8,ResourceType)>},
     EndTurn
 }
 
@@ -251,7 +252,7 @@ pub enum TurnState {
     TrickTaking,
     Prelude {action_type: ActionType, pips_left: u8},
     Actions {action_type: ActionType, pips_left: u8},
-    AllocateResource {resource: ResourceType},
+    AllocateResources {player: Color, resources: Vec<ResourceType>},
     AllocateDiceResults {target_system: u8, target_player: Color, self_hits: u8, hits: u8, building_hits: u8, keys: u8}
 }
 

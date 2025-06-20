@@ -60,12 +60,7 @@
         },
         {
             "title": "Doing",
-            "tasks": [
-                {
-                    "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
-                    "id": "z5pg8rkwufgci0l7i3miatys"
-                }
-            ],
+            "tasks": [],
             "id": "to0kc4sk1ozwmt77reeyi9e8",
             "color": "#0693e3"
         },
@@ -83,6 +78,10 @@
                 {
                     "text": "Prelude Actions",
                     "id": "l8lxzt7uvejlicsguyu0fchq"
+                },
+                {
+                    "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
+                    "id": "z5pg8rkwufgci0l7i3miatys"
                 }
             ],
             "id": "crpwi6ycq8zaa3es3mijqlzr",
@@ -125,5 +124,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1750362937221
+    "timestamp": 1750412561292
 }
