@@ -2,8 +2,7 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, Ambition, AmbitionMarker, AmbitionTypes, BasicAction, BuildType, Color, GameState, ReserveType, ResourceType, TurnState};
-    use correspondence_arcs::data::system::{BuildingSlot, BuildingType, Ships, System, SystemType};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BasicAction, Color, ReserveType};
     
     use correspondence_arcs::board;
     use correspondence_arcs::actions::{execute_action, execute_actions};

@@ -1,5 +1,3 @@
-use std::clone;
-
 use super::game_state::{GameState, Color, Agents, ResourceType, AmbitionTypes, PreludeActionPayload};
 use super::system::System;
 use crate::actions::place_ships;
@@ -39,11 +37,11 @@ impl CourtCard {
     }
 }
 
-fn dummy_function_prelude(_game_state: &GameState, _payload: PreludeActionPayload) -> GameState {
-    panic!("This function should not be called, it is a placeholder for the PreludeActionPayload");
+fn dummy_function_prelude(game_state: &GameState, payload: PreludeActionPayload) -> GameState {
+    panic!("This function should not be called, it is a placeholder for the PreludeAction");
 }
 
-pub fn create_court_deck(players: Vec<Color>) -> Vec<CourtCard> {
+pub fn create_court_deck(players: Vec<Color>, seed:u64) -> Vec<CourtCard> {
     let agents: Vec<Agents> = players.iter().map(|color| Agents { color: color.clone(), count: 0 }).collect();
     let mut court = vec![
         CourtCard::VoxCard {
@@ -280,7 +278,7 @@ pub fn create_court_deck(players: Vec<Color>) -> Vec<CourtCard> {
             agents: agents.clone() 
         }
     ];
-    let mut rng = StdRng::seed_from_u64(42);
+    let mut rng = StdRng::seed_from_u64(seed);
     court.shuffle(&mut rng);
     return court;
 }
@@ -289,7 +287,6 @@ fn mass_uprising(game_state: &GameState, vox_payload: VoxPayload) -> GameState {
     match vox_payload {
         VoxPayload::MassUprising { target_systems } => {
             let reserve_ships = game_state.players.get(&game_state.current_player).unwrap().reserve.get(&ReserveType::Ships).unwrap();
-
 
             if target_systems.len() != 4 && *reserve_ships >= 4 {
                 panic!("Invalid number of target systems for mass uprising: {:?}", target_systems);
@@ -303,7 +300,6 @@ fn mass_uprising(game_state: &GameState, vox_payload: VoxPayload) -> GameState {
             if !target_systems.iter().map(|s| get_cluster(*s)).tuple_windows().all(|(a, b)| a == b) {
                 panic!("Systems are not all in the same cluster")
             }
-
 
             let new_systems = game_state.systems.iter().map(|s| {
                 match s {
@@ -343,11 +339,11 @@ pub struct Vox {
     
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Guild {
-    title: String,
-    description: String,
-    resource: ResourceType,
-    keys: u8,
-    prelude_action: Option<fn(&GameState, PreludeActionPayload) -> GameState>
+    pub title: String,
+    pub description: String,
+    pub resource: ResourceType,
+    pub keys: u8,
+    pub prelude_action: Option<fn(&GameState, PreludeActionPayload) -> GameState>
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

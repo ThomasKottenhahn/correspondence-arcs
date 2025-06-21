@@ -1,5 +1,3 @@
-use std::io::Empty;
-
 use super::game_state::{Color, ResourceType};
 
 #[derive(Clone, Debug, PartialEq, Eq)]

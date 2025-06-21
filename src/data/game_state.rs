@@ -140,7 +140,7 @@ pub struct PlayerArea {
 }
 
 impl PlayerArea {
-    pub fn add_trophies(&mut self, tropies: Vec<Trophy>) {
+    pub fn add_trophies(&self, tropies: Vec<Trophy>) -> Vec<Trophy>{
         let combined = tropies.iter().fold(self.tropies.clone(), {
             |mut acc, trophy| {
                 if let Some(existing) = acc.iter_mut().find(|t| t.trophy_type == trophy.trophy_type && t.player == trophy.player) {
@@ -151,7 +151,7 @@ impl PlayerArea {
                 acc
             }
         });
-        self.tropies = combined;
+        return combined;
     }
 
     pub fn add_action_cards(&mut self, cards: Vec<ActionCard>) {

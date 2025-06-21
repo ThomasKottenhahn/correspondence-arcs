@@ -120,6 +120,11 @@ fn setup_player_area(player_color: &Color) -> PlayerArea {
 }
 
 pub fn setup_game(setup_card: &SetupCard) -> GameState {
+    let seed = rand::random::<u64>();
+    setup_game_with_set_seed(setup_card, seed)
+}
+
+pub fn setup_game_with_set_seed(setup_card: &SetupCard, seed: u64) -> GameState {
     let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow].iter().take(setup_card.players.into()).cloned().collect();
     let mut players: Vec<PlayerArea> = all_colors[0..(setup_card.players as usize)].iter().map(|x|setup_player_area(x)).collect();
     players[0].initiative = true;
@@ -230,7 +235,7 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
         .map(|a| (a.clone(), Ambition {ambition_type: a.clone(), markers: vec![], discarded_resources: vec![]}))
         .collect();
 
-    let court_draw_pile = create_court_deck(all_colors);
+    let court_draw_pile = create_court_deck(all_colors, seed);
 
     return GameState{
         players: players.clone().into_iter().map(|p| (p.player.clone(), p)).collect(),

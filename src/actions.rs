@@ -5,7 +5,7 @@ use itertools::Itertools;
 use rand::Rng;
 
 use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, PlayerArea, ReserveType, ResourceSlot, ResourceType, Trophy, TrophyType, TurnState};
-use crate::data::court_cards::{CourtCard, VoxPayload};
+use crate::data::court_cards::{CourtCard, Guild, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
 fn use_action_pip(game_state: &GameState) -> GameState {
@@ -295,14 +295,25 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
                     .filter(|a| a.color != current_player)
                     .map(|a| Trophy{trophy_type: TrophyType::Agent, count: a.count, player: a.color.clone()})
                     .collect();
-                let mut current_player_area = new_game_state.get_player_area(&current_player);
-                current_player_area.add_trophies(tropies);
-                current_player_area.guild_cards.push(guild);
-                return new_game_state;
+                let current_player_area = new_game_state.get_player_area(&current_player);
+                let combined_trophies = current_player_area.add_trophies(tropies);
+                let new_guild_cards: Vec<Guild> = current_player_area.guild_cards.iter().cloned().chain(vec![guild.clone()]).collect();
+                let new_players: HashMap<Color, PlayerArea> = new_game_state.players.iter().map(|(c,p)| if *c==current_player 
+                                    { (c.clone(), PlayerArea{ 
+                                        tropies: combined_trophies.clone(),
+                                        guild_cards: new_guild_cards.clone(),
+                                        ..p.clone()
+                                    })}
+                                    else {(c.clone(),p.clone())}
+                                ).collect();
+                return GameState {
+                    players: new_players,
+                    ..new_game_state.clone()
+                };
             },
         }
     }
-    else {panic!("Can only secure controlled Card")};
+    else { panic!("Can only secure controlled Card") };
 }
 
 fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameState {
