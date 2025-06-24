@@ -109,6 +109,7 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
 fn setup_player_area(player_color: &Color) -> PlayerArea {
     return PlayerArea{
         player: player_color.clone(),
+        power: 0,
         initiative: false,
         action_cards: vec![],
         guild_cards: vec![],

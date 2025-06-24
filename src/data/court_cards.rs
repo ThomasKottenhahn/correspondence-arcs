@@ -292,7 +292,7 @@ fn mass_uprising(game_state: &GameState, vox_payload: VoxPayload) -> GameState {
                 panic!("Invalid number of target systems for mass uprising: {:?}", target_systems);
             } 
 
-            if target_systems.len() > (*reserve_ships).into() {
+            if target_systems.len() > *reserve_ships as usize {
                 panic!("Cannot place {:?} Ships using Mass Uprising, when only {:?} are in reserve", target_systems.len(), reserve_ships)
             }
 

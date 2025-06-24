@@ -1,6 +1,8 @@
 use std::clone;
 use std::collections::HashMap;
 
+use actix_web::Resource;
+
 use crate::data::game_state;
 
 use super::court_cards::{CourtCard, VoxPayload, Guild};
@@ -49,15 +51,8 @@ pub struct Agents{
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TrophyType {
-    Ship,
-    Building,
-    Agent
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Trophy {
-    pub trophy_type: TrophyType,
+    pub trophy_type: ReserveType,
     pub count: u8,
     pub player: Color
 }
@@ -130,6 +125,7 @@ pub enum ReserveType {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlayerArea {
     pub player: Color,
+    pub power: u8,
     pub initiative: bool,
     pub action_cards: Vec<ActionCard>,
     pub guild_cards: Vec<Guild>,
@@ -218,6 +214,23 @@ impl PlayerArea {
             }
         }).unzip();
         (PlayerArea { resource_slots: new_resource_slots, ..self.clone() }, overflow_resources.into_iter().filter_map(|o| o).collect())
+    }
+
+    pub fn get_resource_count(&self, resource: ResourceType) -> u8 {
+        let guild_resources = self.guild_cards.iter().filter(|g| g.resource == resource).count();
+        let resources = self.resource_slots.iter().filter(|s| match s {
+            ResourceSlot::Used { keys: _, resource: _resource } => true,
+            _ => false
+        }).count();
+        (guild_resources+resources) as u8
+    }
+
+    pub fn get_trophies(&self) -> u8 {
+        self.tropies.iter().map(|t| t.count).sum()
+    }
+
+    pub fn get_captives(&self) -> u8 {
+        self.captives.iter().map(|t| t.count).sum()
     }
 
 }

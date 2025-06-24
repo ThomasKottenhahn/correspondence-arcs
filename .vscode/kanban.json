@@ -45,10 +45,6 @@
                 {
                     "text": "Remove Immutability",
                     "id": "ginfdpnotshdwdlkqnxae6w3"
-                },
-                {
-                    "text": "Ambition Scoring",
-                    "id": "d144lsoibcijsu0dv41nwy4g"
                 }
             ],
             "id": "jfaf045ic9xf3sviz3l2dr0s",
@@ -78,6 +74,10 @@
                 {
                     "text": "Allocate Resources",
                     "id": "q660pli0gzvgvxsspvr45v5r"
+                },
+                {
+                    "text": "Ambition Scoring",
+                    "id": "d144lsoibcijsu0dv41nwy4g"
                 }
             ],
             "id": "crpwi6ycq8zaa3es3mijqlzr",
@@ -86,10 +86,6 @@
         {
             "title": "Testing",
             "tasks": [
-                {
-                    "text": "Secure",
-                    "id": "kirijxvs5msbakmncqdz5wx4"
-                },
                 {
                     "text": "Vox: Mass Uprising",
                     "id": "rci7iw6pu1s0zzz16c0zqbye"
@@ -101,6 +97,10 @@
         {
             "title": "Done",
             "tasks": [
+                {
+                    "text": "Secure",
+                    "id": "kirijxvs5msbakmncqdz5wx4"
+                },
                 {
                     "text": "Influence",
                     "id": "aljbyz8gguuk3lcgafh1jnzs"
@@ -124,5 +124,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1750424067389
+    "timestamp": 1750760645476
 }

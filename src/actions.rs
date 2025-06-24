@@ -1,10 +1,11 @@
 use core::panic;
+use std::clone;
 use std::collections::HashMap;
 
 use itertools::Itertools;
 use rand::Rng;
 
-use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, PlayerArea, ReserveType, ResourceSlot, ResourceType, Trophy, TrophyType, TurnState};
+use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, PlayerArea, ReserveType, ResourceSlot, ResourceType, Trophy, TurnState};
 use crate::data::court_cards::{CourtCard, Guild, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
 
@@ -283,7 +284,7 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
             CourtCard::VoxCard { vox, agents } => {
                 let tropies: Vec<Trophy> = agents.iter()
                     .filter(|a| a.color != current_player)
-                    .map(|a| Trophy{trophy_type: TrophyType::Agent, count: a.count, player: a.color.clone()})
+                    .map(|a| Trophy{trophy_type: ReserveType::Agents, count: a.count, player: a.color.clone()})
                     .collect();
                 let mut current_player_area = new_game_state.get_player_area(&current_player);
                 current_player_area.add_trophies(tropies);
@@ -293,7 +294,7 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
             CourtCard::GuildCard { guild, agents } => {
                 let tropies: Vec<Trophy> = agents.iter()
                     .filter(|a| a.color != current_player)
-                    .map(|a| Trophy{trophy_type: TrophyType::Agent, count: a.count, player: a.color.clone()})
+                    .map(|a| Trophy{trophy_type: ReserveType::Agents, count: a.count, player: a.color.clone()})
                     .collect();
                 let current_player_area = new_game_state.get_player_area(&current_player);
                 let combined_trophies = current_player_area.add_trophies(tropies);
@@ -332,7 +333,7 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
                 let rivals_play_area = new_game_state.get_player_area(&target_player).change_reserve(&ReserveType::Agents, -1);
                 let mut current_player_area = new_game_state.get_player_area(&game_state.current_player);
                 current_player_area.add_trophies(vec![Trophy {
-                    trophy_type: TrophyType::Agent,
+                    trophy_type: ReserveType::Agents,
                     count: 1,
                     player: target_player.clone(),
                 }]);
@@ -511,10 +512,111 @@ fn allocate_resources(game_state: &GameState, configuration: Vec<(u8, ResourceTy
     }
 }
 
+fn score_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameState {
+    let evaluation = match ambition {
+        AmbitionTypes::Tycoon => |a: PlayerArea| a.get_resource_count(ResourceType::Fuel) + a.get_resource_count(ResourceType::Material),
+        AmbitionTypes::Tyrant => |a: PlayerArea| a.get_captives(),
+        AmbitionTypes::Warlord => |a: PlayerArea| a.get_trophies(),
+        AmbitionTypes::Keeper => |a: PlayerArea| a.get_resource_count(ResourceType::Relics),
+        AmbitionTypes::Empath => |a: PlayerArea| a.get_resource_count(ResourceType::Psionics),
+    };
+    let ranking = game_state.players.iter()
+        .map(|(c,a)| (Some(c.clone()), evaluation(a.clone())))
+        .chain(
+            vec![(None, game_state.ambitions.get(&ambition).unwrap().discarded_resources.len() as u8)]
+        )
+        .sorted_by(|a, b| b.1.cmp(&a.1))
+        .collect::<HashMap<Option<Color>, u8>>();
+
+    let points: HashMap<Option<Color>, usize> = ranking
+        .iter()
+        .map(|(c,s)|{
+            match c {
+                Some(c) => {
+                    let higher_count = ranking.iter().filter(|(_c2, s2)| *s2 > s).count();
+                    if higher_count == 0 && ranking.iter().all(|(_c2,s2)| s2 < s) {
+                        // This player is the sole highest
+                        let points = game_state.ambitions
+                            .get(&ambition)
+                            .unwrap()
+                            .markers
+                            .iter()
+                            .map(|m| if m.flipped {m.first_place_flipped as usize} else {m.first_place as usize}).sum::<usize>()
+                            + match game_state.players.get(&c).unwrap().reserve.get(&ReserveType::Cities).unwrap() {
+                                0 => 5,
+                                1 => 2,
+                                _ => 0
+                            };
+                        (Some((*c).clone()), points)
+                    } else if higher_count == 1 || higher_count == 0 {
+                        // Only one player is higher, so this is second place or tied first
+                        let points = game_state.ambitions
+                            .get(&ambition)
+                            .unwrap()
+                            .markers
+                            .iter()
+                            .map(|m| if m.flipped {m.second_place_flipped as usize} else {m.second_place as usize}).sum();
+                        (Some((*c).clone()), points)
+                    } else {
+                        (Some((*c).clone()), 0)
+                    }
+                },
+                None => (None, 0)
+            }
+        })
+        .filter(|(c,_s)| *c != None)
+        .collect();
+
+    let new_players: HashMap<Color, PlayerArea> = game_state.players
+        .iter()
+        .map(|(c,a)| (c.clone(), PlayerArea { power: a.power + *points.get(&Some(c.clone())).unwrap() as u8, ..a.clone()}))
+        .collect();
+    
+    if ambition == AmbitionTypes::Warlord {
+        let players: HashMap<Color,PlayerArea> = new_players.iter().map(|(c,a)| (c.clone(), PlayerArea { tropies: vec![], ..a.clone()})).collect();
+
+        let new_players = game_state.players
+            .iter()
+            .map(|(_,a)| a.tropies.clone())
+            .flatten()
+            .fold(players, |p, t| {
+                p.iter()
+                    .map(|(c,a)| (c.clone(), a.change_reserve(&t.trophy_type, t.count as i8)))
+                    .collect()
+            });
+        return GameState {players: new_players, .. game_state.clone()};
+    }
+
+    if ambition == AmbitionTypes::Tyrant {
+        let players: HashMap<Color,PlayerArea> = new_players.iter().map(|(c,a)| (c.clone(), PlayerArea { captives: vec![], ..a.clone()})).collect();
+
+        let new_players = game_state.players
+            .iter()
+            .map(|(_,a)| a.captives.clone())
+            .flatten()
+            .fold(players, |p, t| {
+                p.iter()
+                    .map(|(c,a)| (c.clone(), a.change_reserve(&ReserveType::Agents, t.count as i8)))
+                    .collect()
+            });
+        return GameState {players: new_players, .. game_state.clone()};
+    }
+
+    GameState {players: new_players, .. game_state.clone()}
+}
+
 fn end_chapter(game_state: &GameState) -> GameState {
-    //Evaluate Ambitions
+    let new_game_state = game_state.ambitions.iter()
+        .filter(|(_, a)| a.markers.len() != 0)
+        .map(|(t, a)| (t.clone(), a.clone()))
+        .fold(game_state.clone(), |gs, (ambition_type, _)| {
+            score_ambition(&gs, ambition_type.clone())
+        });
+
+    //Todo reshuffle cards
+
     println!("End Chapter");
-    game_state.clone()
+    return new_game_state;
 }
 
 fn end_round(game_state: &GameState) -> GameState {

@@ -45,7 +45,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "Can only secure controlled Card")]
     fn secure_not_controlled_guild_card() {
         let mut game_state = setup_game_with_set_seed(&two_player_frontiers(),11);
 
