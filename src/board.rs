@@ -106,7 +106,7 @@ fn create_reach(setup_card: &SetupCard) -> Vec<System> {
     return systems;
 }
 
-fn setup_player_area(player_color: &Color) -> PlayerArea {
+fn setup_player_area(player_color: &Color, resources: (ResourceType,ResourceType)) -> PlayerArea {
     return PlayerArea{
         player: player_color.clone(),
         power: 0,
@@ -127,10 +127,22 @@ pub fn setup_game(setup_card: &SetupCard) -> GameState {
 
 pub fn setup_game_with_set_seed(setup_card: &SetupCard, seed: u64) -> GameState {
     let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow].iter().take(setup_card.players.into()).cloned().collect();
-    let mut players: Vec<PlayerArea> = all_colors[0..(setup_card.players as usize)].iter().map(|x|setup_player_area(x)).collect();
+    let systems = create_reach(setup_card);
+    let mut players: Vec<PlayerArea> = all_colors[0..(setup_card.players as usize)]
+        .iter()
+        .zip(
+            setup_card.a_locations.iter().zip(setup_card.b_locations.iter())
+            .map(|(a,b)| {
+                match (&systems[*a as usize], &systems[*b as usize]) {
+                    (System::Used{system_type: SystemType::Planet { resource: r1 }, ..}, System::Used{system_type: SystemType::Planet { resource: r2 }, ..}) => (r1.clone(), r2.clone()),
+                    _ => panic!()
+                }
+            })
+        
+        )
+        .map(|(c, r)| setup_player_area(c, r) ).collect();
     players[0].initiative = true;
 
-    let systems = create_reach(setup_card);
     let systems = setup_card
         .a_locations
         .iter()

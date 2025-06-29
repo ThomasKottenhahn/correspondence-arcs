@@ -85,12 +85,7 @@
         },
         {
             "title": "Testing",
-            "tasks": [
-                {
-                    "text": "Vox: Mass Uprising",
-                    "id": "rci7iw6pu1s0zzz16c0zqbye"
-                }
-            ],
+            "tasks": [],
             "id": "td65keze3s2ehfwj7xz6ro4s",
             "color": "#9900ef"
         },
@@ -116,6 +111,10 @@
                 {
                     "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
                     "id": "z5pg8rkwufgci0l7i3miatys"
+                },
+                {
+                    "text": "Vox: Mass Uprising",
+                    "id": "rci7iw6pu1s0zzz16c0zqbye"
                 }
             ],
             "id": "r2c7wwti7g00q6vvphhl7c38",
@@ -124,5 +123,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1750760645476
+    "timestamp": 1751227526113
 }
