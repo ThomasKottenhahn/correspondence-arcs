@@ -180,6 +180,25 @@ pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_syst
     return game_state;
 }
 
+fn catapult(game_state: &GameState, origin_system: u8, destination_systems: Vec<(u8,u8,u8)>) -> GameState {
+    let current_player = game_state.current_player.clone();
+
+    let (building_slots, ships) = match &game_state.systems[origin_system as usize] {
+        System::Unused => panic!("Cannot catapult from Unused System"),
+        System::Used {building_slots, ships, ..} => (building_slots,ships.iter().find(|s|s.player == current_player).unwrap())
+    };
+
+    let has_loyal_starport = building_slots.iter().any(|b| match b {
+            BuildingSlot::Occupied { player, building_type: BuildingType::Starport, .. } if player == &current_player => true,
+            _ => false
+        });
+    if !has_loyal_starport {panic!("Cannot catapult from {:?}, because the system has no loyal Starport", origin_system)}
+    
+    //Check if we move less or equal to the ships present
+
+    todo!()
+}
+
 fn repair(game_state: &GameState, target_system: u8, build_type: BuildType) -> GameState {
     let mut game_state = game_state.clone();
     let system = game_state.systems[target_system as usize].clone();
@@ -286,16 +305,25 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
                     .filter(|a| a.color != current_player)
                     .map(|a| Trophy{trophy_type: ReserveType::Agents, count: a.count, player: a.color.clone()})
                     .collect();
-                let mut current_player_area = new_game_state.get_player_area(&current_player);
-                current_player_area.add_trophies(tropies);
-
-                return (vox.on_secure)(&new_game_state, vox_payload.expect("VoxPayload required"));
+                let players_agents = agents.iter().find(|a| a.color == current_player).unwrap().count;
+                let current_player_area = new_game_state.get_player_area(&current_player);
+                let combined_trophies = current_player_area.add_trophies(tropies);
+                let new_players: HashMap<Color, PlayerArea> = new_game_state.players.iter().map(|(c,p)| if *c==current_player 
+                                    { (c.clone(), PlayerArea{ 
+                                        tropies: combined_trophies.clone(),
+                                        ..p.clone()
+                                    }.change_reserve(&ReserveType::Agents, players_agents as i8)
+                                )}
+                                    else {(c.clone(),p.clone())}
+                                ).collect();
+                return (vox.on_secure)(&GameState { players: new_players, ..new_game_state.clone() }, vox_payload.expect("VoxPayload required"));
             },
             CourtCard::GuildCard { guild, agents } => {
                 let tropies: Vec<Trophy> = agents.iter()
                     .filter(|a| a.color != current_player)
                     .map(|a| Trophy{trophy_type: ReserveType::Agents, count: a.count, player: a.color.clone()})
                     .collect();
+                let players_agents = agents.iter().find(|a| a.color == current_player).unwrap().count;
                 let current_player_area = new_game_state.get_player_area(&current_player);
                 let combined_trophies = current_player_area.add_trophies(tropies);
                 let new_guild_cards: Vec<Guild> = current_player_area.guild_cards.iter().cloned().chain(vec![guild.clone()]).collect();
@@ -304,7 +332,8 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
                                         tropies: combined_trophies.clone(),
                                         guild_cards: new_guild_cards.clone(),
                                         ..p.clone()
-                                    })}
+                                    }.change_reserve(&ReserveType::Agents, players_agents as i8)
+                                )}
                                     else {(c.clone(),p.clone())}
                                 ).collect();
                 return GameState {
@@ -384,6 +413,8 @@ fn execute_prelude_action(game_state: &GameState, action: BasicAction, resource:
         (BasicAction::Influence { card_id }, ResourceType::Psionics, ActionType::Administration | ActionType::Mobilization) => influence(game_state, card_id),
         (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Fuel, _) => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
         (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Psionics, ActionType::Agression | ActionType::Mobilization) => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+        (BasicAction::Catapult { origin_system, destination_systems }, ResourceType::Fuel, _) => catapult(game_state, origin_system, destination_systems),
+        (BasicAction::Catapult { origin_system, destination_systems }, ResourceType::Psionics, ActionType::Agression | ActionType::Mobilization) => catapult(game_state, origin_system, destination_systems),
         (BasicAction::Secure { card_id, vox_payload }, ResourceType::Relics, _) => secure(game_state, card_id, vox_payload),
         (BasicAction::Secure { card_id, vox_payload }, ResourceType::Psionics, ActionType::Agression) => secure(game_state, card_id, vox_payload),
         (BasicAction::Battle { target_system, target_player, dice }, ResourceType::Psionics, ActionType::Agression) => battle(game_state, target_system, target_player, dice),
@@ -646,7 +677,6 @@ fn end_round(game_state: &GameState) -> GameState {
 }
 
 fn end_turn(game_state: &GameState) -> GameState {
-    //Otherwise next players Turn
     let player_order: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow].iter().take(game_state.players.len()).cloned().collect();
     let mut new_game_state = game_state.clone();
     new_game_state.turn_state = TurnState::TrickTaking;
@@ -776,6 +806,7 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                 },
                 (ActionType::Agression, Action::MainAction { basic_action }) => match basic_action {
                     BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
+                    BasicAction::Catapult { origin_system, destination_systems } => catapult(game_state, origin_system, destination_systems),
                     BasicAction::Secure { card_id , vox_payload} => secure(&use_action_pip(&game_state), card_id, vox_payload),
                     BasicAction::Battle { target_system, target_player, dice } => battle(&use_action_pip(&game_state), target_system, target_player, dice),
                     _ => panic!("Cannot execute Action with Aggresion Action Card")
@@ -787,6 +818,7 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                 },
                 (ActionType::Mobilization, Action::MainAction { basic_action }) => match basic_action {
                     BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
+                    BasicAction::Catapult { origin_system, destination_systems } => catapult(game_state, origin_system, destination_systems),
                     BasicAction::Influence { card_id } => influence(&use_action_pip(&game_state), card_id),
                     _ => panic!("Cannot execute Action with Mobilization Action Card")                    
                 },

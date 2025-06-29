@@ -11,7 +11,7 @@ use crate::actions::place_building;
 pub fn get_cluster(system_id: u8) -> u8 {
     match system_id {
         0..6 => system_id,
-        6..24 => system_id/3 as u8,
+        6..24 => (system_id/3)-2 as u8,
         _ => panic!()
     }
 }

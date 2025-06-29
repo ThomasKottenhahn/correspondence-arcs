@@ -1,9 +1,4 @@
-use std::clone;
 use std::collections::HashMap;
-
-use actix_web::Resource;
-
-use crate::data::game_state;
 
 use super::court_cards::{CourtCard, VoxPayload, Guild};
 use super::system::{System};
@@ -80,6 +75,8 @@ pub enum BasicAction{
     Move {origin_id: u8, destination_id: u8, fresh_ships: u8, damaged_ships: u8},
     Secure {card_id: u8, vox_payload: Option<VoxPayload>},
     Battle {target_system: u8, target_player: Color, dice: Vec<Dice>},
+    // The destination systems hold Information about the systems, Ships end up, and how many fresh and damaged ships move there
+    Catapult {origin_system: u8, destination_systems: Vec<(u8,u8,u8)>}
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
