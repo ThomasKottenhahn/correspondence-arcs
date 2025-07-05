@@ -14,8 +14,8 @@ mod test {
 
         game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
-        let game_state = actions::move_ships(&game_state, 17, 16, 1, 0);
-        let game_state = actions::move_ships(&game_state, 16, 15, 1, 0);
+        let game_state = actions::moving::move_ships(&game_state, 17, 16, 1, 0);
+        let game_state = actions::moving::move_ships(&game_state, 16, 15, 1, 0);
 
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
@@ -46,8 +46,8 @@ mod test {
 
         game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
-        let game_state = actions::move_ships(&game_state, 17, 16, 3, 0);
-        let game_state = actions::move_ships(&game_state, 16, 15, 3, 0);
+        let game_state = actions::moving::move_ships(&game_state, 17, 16, 3, 0);
+        let game_state = actions::moving::move_ships(&game_state, 16, 15, 3, 0);
 
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
@@ -82,8 +82,8 @@ mod test {
 
         game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
-        let game_state = actions::move_ships(&game_state, 17, 16, 1, 0);
-        let game_state = actions::move_ships(&game_state, 16, 15, 1, 0);
+        let game_state = actions::moving::move_ships(&game_state, 17, 16, 1, 0);
+        let game_state = actions::moving::move_ships(&game_state, 16, 15, 1, 0);
 
         let _ = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
@@ -100,7 +100,7 @@ mod test {
 
         game_state.add_action_cards(&Color::Red, vec![ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }]);
 
-        let game_state = actions::move_ships(&game_state, 17, 16, 1, 0);
+        let game_state = actions::moving::move_ships(&game_state, 17, 16, 1, 0);
 
         let _ = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Agression, number: 2, pips: 3, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },

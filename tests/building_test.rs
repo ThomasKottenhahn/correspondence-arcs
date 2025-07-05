@@ -6,7 +6,7 @@ mod test{
     use correspondence_arcs::data::system::{BuildingSlot, BuildingType, Ships, System, SystemType};
     
     use correspondence_arcs::board;
-    use correspondence_arcs::actions;
+    use correspondence_arcs::actions::{self, moving};
 
     #[test]
     fn test_building_ships(){
@@ -72,7 +72,7 @@ mod test{
         let target_system = 16;
         let build_type = BuildType::City;
 
-        let game_state = actions::move_ships(&game_state, 17, 16, 2, 0);
+        let game_state = actions::moving::move_ships(&game_state, 17, 16, 2, 0);
 
         let new_game_state = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
@@ -99,8 +99,8 @@ mod test{
         let target_system: u8 = 15;
         let build_type = BuildType::Starport;
 
-        let g1 = actions::move_ships(&game_state,17, 16, 2, 0);
-        let g2 = actions::move_ships(&g1,16,15, 2, 0);
+        let g1 = actions::moving::move_ships(&game_state,17, 16, 2, 0);
+        let g2 = actions::moving::move_ships(&g1,16,15, 2, 0);
         
         let new_game_state = actions::execute_actions(&g2, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
@@ -129,7 +129,7 @@ mod test{
         let target_system = 3;
         let build_type = BuildType::Starport;
 
-        let g1 = actions::move_ships(&game_state, 17, 3, 2, 0);
+        let g1 = actions::moving::move_ships(&game_state, 17, 3, 2, 0);
         let _ = actions::execute_actions(&g1, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Construction, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,

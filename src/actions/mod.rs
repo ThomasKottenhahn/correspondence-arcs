@@ -1,5 +1,3 @@
-use core::panic;
-use std::clone;
 use std::collections::HashMap;
 
 use itertools::Itertools;
@@ -8,6 +6,10 @@ use rand::Rng;
 use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, PlayerArea, ReserveType, ResourceSlot, ResourceType, Trophy, TurnState};
 use crate::data::court_cards::{CourtCard, Guild, VoxPayload};
 use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
+use crate::board::{place_ships, remove_ships};
+
+mod building;
+pub mod moving;
 
 fn use_action_pip(game_state: &GameState) -> GameState {
     match &game_state.turn_state {
@@ -18,185 +20,6 @@ fn use_action_pip(game_state: &GameState) -> GameState {
             },
             _ => panic!("Cannot use action pip in {:?}", game_state.turn_state)
     }
-}
-
-pub fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot> {
-    if building_slots.len() == 0{
-        panic!("No building slots available");
-    }
-
-    if building_slots.iter().all(|x| matches!(x, BuildingSlot::Occupied { .. })) {
-        panic!("All building slots are occupied");
-    }
-
-    for i in 0..building_slots.len(){
-        if building_slots[i] == BuildingSlot::Empty{
-            let mut building_slots = building_slots.clone();
-            building_slots[i] = building;
-            return building_slots;
-        }
-    }
-    return building_slots.clone();
-}
-
-pub fn place_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
-    let mut new_ships: Vec<Ships> = vec![];
-    for ships_struct in ships{
-        if &ships_struct.player == player {
-            let mut ships_struct = ships_struct.clone();
-            ships_struct.fresh = ships_struct.fresh + fresh;
-            ships_struct.damaged = ships_struct.damaged + damaged;
-            new_ships.push(ships_struct);
-        } else {
-            new_ships.push(ships_struct.clone());
-        }
-    }
-    return new_ships;
-}
-
-fn remove_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
-    let mut new_ships: Vec<Ships> = vec![];
-    for ships_struct in ships{
-        if &ships_struct.player == player {
-            let mut ships_struct = ships_struct.clone();
-            ships_struct.fresh = ships_struct.fresh.checked_sub(fresh).expect("Tried to move more fresh ships than available");
-            ships_struct.damaged = ships_struct.damaged.checked_sub(damaged).expect("Tried to move more damaged ships than available");
-            new_ships.push(ships_struct);
-        } else {
-            new_ships.push(ships_struct.clone());
-        }
-    }
-    return new_ships;
-}
-
-fn build(game_state: &GameState, target_system: u8, build_type: BuildType) -> GameState {
-    let mut game_state = game_state.clone();
-
-    let current_player = game_state.current_player.clone();
-    let system: System = game_state.systems[target_system as usize].clone();
-    
-    if !system.has_presence(&current_player) {panic!("Cannot build in a System without presence")}
-    
-    match system{
-        System::Unused => panic!("System is unused"),
-        System::Used {
-            system_id,
-            system_type,
-            building_slots,
-            ships,
-            controlled_by,
-            connects_to
-        } => {
-            let build_fresh = match controlled_by.clone() {
-                None => true,
-                Some(c) => c==current_player
-            };    
-        
-            match build_type {
-                BuildType::Ship => game_state.systems[target_system as usize] = System::Used {
-                    system_id: system_id, 
-                    system_type: system_type.clone(), 
-                    building_slots: building_slots.clone(),
-                    ships: place_ships(&ships, &current_player, if build_fresh {1} else {0}, if !build_fresh {0} else {0}), 
-                    controlled_by: controlled_by.clone(), 
-                    connects_to: connects_to.clone() }.use_building(&BuildingType::Starport, &current_player).update_control(),
-                BuildType::City => {
-                    let building = BuildingSlot::Occupied {fresh: build_fresh, player: current_player, building_type: BuildingType::City, used: false};
-                    game_state.systems[target_system as usize] = System::Used {
-                    system_id: system_id, 
-                    system_type: system_type.clone(), 
-                    building_slots: place_building(&building_slots, building), 
-                    ships: ships.clone(), 
-                    controlled_by: controlled_by.clone(), 
-                    connects_to: connects_to.clone() }
-                },   
-                BuildType::Starport => {
-                    let building = BuildingSlot::Occupied {fresh: build_fresh, player: current_player, building_type: BuildingType::Starport, used: false};
-                    game_state.systems[target_system as usize] = System::Used {
-                    system_id: system_id, 
-                    system_type: system_type.clone(), 
-                    building_slots: place_building(&building_slots, building), 
-                    ships: ships.clone(), 
-                    controlled_by: controlled_by.clone(), 
-                    connects_to: connects_to.clone() }
-                }
-            }
-            return game_state;
-        }
-    }
-    
-}
-
-pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_system_id: u8, fresh: u8, damaged: u8) -> GameState {
-    let mut game_state = game_state.clone();
-
-    let origin_system = game_state.systems[origin_system_id as usize].clone();
-    let destination_system = game_state.systems[destination_system_id as usize].clone();
-
-    match origin_system{
-        System::Unused => panic!("Origin system is unused"),
-        System::Used {
-            system_id,
-            system_type,
-            building_slots,
-            ships,
-            controlled_by,
-            connects_to
-        } => {
-            if !connects_to.contains(&destination_system_id) {panic!("Destination not connected to Origin")}
-            let updated_ships = remove_ships(&ships, &game_state.current_player, fresh, damaged);
-            game_state.systems[origin_system_id as usize] = System::Used {
-                system_id,
-                system_type: system_type.clone(),
-                building_slots: building_slots.clone(),
-                ships: updated_ships,
-                controlled_by: controlled_by.clone(),
-                connects_to: connects_to.clone(),
-            }.update_control();
-        }
-    }
-
-    match destination_system{
-        System::Unused => panic!("Destination system is unused"),
-        System::Used {
-            system_id,
-            system_type,
-            building_slots,
-            ships,
-            controlled_by,
-            connects_to
-        } => {
-            let updated_ships = place_ships(&ships, &game_state.current_player, fresh, damaged);
-            game_state.systems[destination_system_id as usize] = System::Used {
-                system_id: system_id, 
-                system_type: system_type.clone(), 
-                building_slots: building_slots.clone(), 
-                ships: updated_ships, 
-                controlled_by: controlled_by.clone(), 
-                connects_to: connects_to.clone() }.update_control()
-        }
-    }
-
-    return game_state;
-}
-
-fn catapult(game_state: &GameState, origin_system: u8, destination_systems: Vec<(u8,u8,u8)>) -> GameState {
-    let current_player = game_state.current_player.clone();
-
-    let (building_slots, ships) = match &game_state.systems[origin_system as usize] {
-        System::Unused => panic!("Cannot catapult from Unused System"),
-        System::Used {building_slots, ships, ..} => (building_slots,ships.iter().find(|s|s.player == current_player).unwrap())
-    };
-
-    let has_loyal_starport = building_slots.iter().any(|b| match b {
-            BuildingSlot::Occupied { player, building_type: BuildingType::Starport, .. } if player == &current_player => true,
-            _ => false
-        });
-    if !has_loyal_starport {panic!("Cannot catapult from {:?}, because the system has no loyal Starport", origin_system)}
-    
-    //Check if we move less or equal to the ships present
-
-    todo!()
 }
 
 fn repair(game_state: &GameState, target_system: u8, build_type: BuildType) -> GameState {
@@ -405,16 +228,16 @@ fn declare_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameStat
 
 fn execute_prelude_action(game_state: &GameState, action: BasicAction, resource: Option<ResourceType>) -> GameState {
     match (action.clone(), resource.clone().expect("No Resource in ResourceSlot"), game_state.lead_card.clone().unwrap().0.action_type) {
-        (BasicAction::Build { target_system, build_type }, ResourceType::Material, _) => build(game_state, target_system, build_type),
-        (BasicAction::Build { target_system, build_type }, ResourceType::Psionics, ActionType::Construction) => build(game_state, target_system, build_type),
+        (BasicAction::Build { target_system, build_type }, ResourceType::Material, _) => building::build(game_state, target_system, build_type),
+        (BasicAction::Build { target_system, build_type }, ResourceType::Psionics, ActionType::Construction) => building::build(game_state, target_system, build_type),
         (BasicAction::Repair { target_system, build_type }, ResourceType::Material, _) => repair(game_state, target_system, build_type),
         (BasicAction::Repair { target_system, build_type }, ResourceType::Psionics, ActionType::Mobilization) => repair(game_state, target_system, build_type),
         (BasicAction::Tax { target_system, target_player }, ResourceType::Psionics, ActionType::Administration) => tax(game_state, target_system, target_player),
         (BasicAction::Influence { card_id }, ResourceType::Psionics, ActionType::Administration | ActionType::Mobilization) => influence(game_state, card_id),
-        (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Fuel, _) => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
-        (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Psionics, ActionType::Agression | ActionType::Mobilization) => move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
-        (BasicAction::Catapult { origin_system, destination_systems }, ResourceType::Fuel, _) => catapult(game_state, origin_system, destination_systems),
-        (BasicAction::Catapult { origin_system, destination_systems }, ResourceType::Psionics, ActionType::Agression | ActionType::Mobilization) => catapult(game_state, origin_system, destination_systems),
+        (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Fuel, _) => moving::move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+        (BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships }, ResourceType::Psionics, ActionType::Agression | ActionType::Mobilization) => moving::move_ships(game_state, origin_id, destination_id, fresh_ships, damaged_ships),
+        (BasicAction::Catapult { origin_system, destination_systems }, ResourceType::Fuel, _) => moving::catapult(game_state, origin_system, destination_systems),
+        (BasicAction::Catapult { origin_system, destination_systems }, ResourceType::Psionics, ActionType::Agression | ActionType::Mobilization) => moving::catapult(game_state, origin_system, destination_systems),
         (BasicAction::Secure { card_id, vox_payload }, ResourceType::Relics, _) => secure(game_state, card_id, vox_payload),
         (BasicAction::Secure { card_id, vox_payload }, ResourceType::Psionics, ActionType::Agression) => secure(game_state, card_id, vox_payload),
         (BasicAction::Battle { target_system, target_player, dice }, ResourceType::Psionics, ActionType::Agression) => battle(game_state, target_system, target_player, dice),
@@ -805,20 +628,20 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
                     _ => panic!("Cannot execute Action with Administration Action Card")                    
                 },
                 (ActionType::Agression, Action::MainAction { basic_action }) => match basic_action {
-                    BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
-                    BasicAction::Catapult { origin_system, destination_systems } => catapult(game_state, origin_system, destination_systems),
+                    BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => moving::move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
+                    BasicAction::Catapult { origin_system, destination_systems } => moving::catapult(game_state, origin_system, destination_systems),
                     BasicAction::Secure { card_id , vox_payload} => secure(&use_action_pip(&game_state), card_id, vox_payload),
                     BasicAction::Battle { target_system, target_player, dice } => battle(&use_action_pip(&game_state), target_system, target_player, dice),
                     _ => panic!("Cannot execute Action with Aggresion Action Card")
                 },
                 (ActionType::Construction, Action::MainAction { basic_action }) => match basic_action {
-                    BasicAction::Build { target_system, build_type } => build(&use_action_pip(game_state), target_system, build_type),
+                    BasicAction::Build { target_system, build_type } => building::build(&use_action_pip(game_state), target_system, build_type),
                     BasicAction::Repair { target_system, build_type } => repair(&use_action_pip(&game_state), target_system, build_type),
                     _ => panic!("Cannot execute Action with Aggresion Action Card")                    
                 },
                 (ActionType::Mobilization, Action::MainAction { basic_action }) => match basic_action {
-                    BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
-                    BasicAction::Catapult { origin_system, destination_systems } => catapult(game_state, origin_system, destination_systems),
+                    BasicAction::Move { origin_id, destination_id, fresh_ships, damaged_ships } => moving::move_ships(&use_action_pip(&game_state), origin_id, destination_id, fresh_ships, damaged_ships),
+                    BasicAction::Catapult { origin_system, destination_systems } => moving::catapult(game_state, origin_system, destination_systems),
                     BasicAction::Influence { card_id } => influence(&use_action_pip(&game_state), card_id),
                     _ => panic!("Cannot execute Action with Mobilization Action Card")                    
                 },

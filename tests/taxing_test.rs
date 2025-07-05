@@ -16,15 +16,15 @@ mod test{
 
         let target_system = 20;
 
-        let new_game_state = actions::execute_actions(&game_state, vec![
+        let g1 = actions::execute_actions(&game_state, vec![
             Action::PlayLeadCard { card: ActionCard { action_type: ActionType::Administration, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) }, declare: None },
             Action::EndPrelude,
             Action::MainAction {basic_action: BasicAction::Tax { target_system: target_system, target_player: Color::Red }}
         ]);
 
-        assert_eq!(new_game_state.turn_state, TurnState::AllocateResources { player: Color::Red, resources: vec![ResourceType::Psionics] });
+        assert_eq!(g1.turn_state, TurnState::AllocateResources { player: Color::Red, resources: vec![ResourceType::Psionics] });
         
-        match new_game_state.systems[target_system as usize].clone() {
+        match g1.systems[target_system as usize].clone() {
             System::Unused => panic!("System should not be unused"),
             System::Used { system_id, system_type, building_slots, ships, controlled_by, connects_to } => {
                 assert_eq!(system_id, target_system);
@@ -35,6 +35,8 @@ mod test{
                 assert_eq!(connects_to, vec![4,19]);
             },
         }
+
+        let g2 = actions::execute_action(&g1, Action::AllocateResources { configuration: vec![(0,ResourceType::Psionics), (1,ResourceType::Material), (2,ResourceType::Psionics)] });
 
     }
 

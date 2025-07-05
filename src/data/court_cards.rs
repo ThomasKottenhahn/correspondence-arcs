@@ -1,8 +1,7 @@
 use super::game_state::{GameState, Color, Agents, ResourceType, AmbitionTypes, PreludeActionPayload};
 use super::system::System;
-use crate::actions::place_ships;
 use crate::data::game_state::ReserveType;
-use crate::board::get_cluster;
+use crate::board::{get_cluster, place_ships};
 
 use itertools::Itertools;
 

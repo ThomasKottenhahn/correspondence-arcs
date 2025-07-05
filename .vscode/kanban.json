@@ -52,7 +52,12 @@
         },
         {
             "title": "Doing",
-            "tasks": [],
+            "tasks": [
+                {
+                    "text": "Remove Reserve, when setting up and update Resourceslots",
+                    "id": "bheit0iahato8c244174tfn6"
+                }
+            ],
             "id": "to0kc4sk1ozwmt77reeyi9e8",
             "color": "#0693e3"
         },
@@ -123,5 +128,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1751227526113
+    "timestamp": 1751228393634
 }

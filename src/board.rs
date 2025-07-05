@@ -5,9 +5,6 @@ use crate::data::setup_cards::{SetupCard};
 use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ReserveType, ResourceType, TurnState, ResourceSlot};
 use crate::data::court_cards::{create_court_deck};
 
-use crate::actions::place_ships;
-use crate::actions::place_building;
-
 pub fn get_cluster(system_id: u8) -> u8 {
     match system_id {
         0..6 => system_id,
@@ -114,7 +111,7 @@ fn setup_player_area(player_color: &Color, resources: (ResourceType,ResourceType
         action_cards: vec![],
         guild_cards: vec![],
         reserve: vec![(ReserveType::Ships, 15), (ReserveType::Agents, 10), (ReserveType::Starports, 5), (ReserveType::Cities, 5)].into_iter().collect(),
-        resource_slots: vec![ResourceSlot::Unused { keys: 3 }, ResourceSlot::Unused { keys: 1 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 2 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 3 }],
+        resource_slots: vec![ResourceSlot::Used { keys: 3, resource: resources.0 }, ResourceSlot::Used { keys: 1, resource: resources.1 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 2 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 3 }],
         captives: vec![],
         tropies: vec![]
     }
@@ -271,4 +268,53 @@ pub fn setup_game_with_set_seed(setup_card: &SetupCard, seed: u64) -> GameState 
         ambition_markers: ambition_markers,
         ambitions: ambitions  
     }.redraw_court_cards();
+}
+
+pub fn place_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
+    let mut new_ships: Vec<Ships> = vec![];
+    for ships_struct in ships{
+        if &ships_struct.player == player {
+            let mut ships_struct = ships_struct.clone();
+            ships_struct.fresh = ships_struct.fresh + fresh;
+            ships_struct.damaged = ships_struct.damaged + damaged;
+            new_ships.push(ships_struct);
+        } else {
+            new_ships.push(ships_struct.clone());
+        }
+    }
+    return new_ships;
+}
+
+pub fn remove_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
+    let mut new_ships: Vec<Ships> = vec![];
+    for ships_struct in ships{
+        if &ships_struct.player == player {
+            let mut ships_struct = ships_struct.clone();
+            ships_struct.fresh = ships_struct.fresh.checked_sub(fresh).expect("Tried to move more fresh ships than available");
+            ships_struct.damaged = ships_struct.damaged.checked_sub(damaged).expect("Tried to move more damaged ships than available");
+            new_ships.push(ships_struct);
+        } else {
+            new_ships.push(ships_struct.clone());
+        }
+    }
+    return new_ships;
+}
+
+pub fn place_building(building_slots: &Vec<BuildingSlot>, building: BuildingSlot) -> Vec<BuildingSlot> {
+    if building_slots.len() == 0{
+        panic!("No building slots available");
+    }
+
+    if building_slots.iter().all(|x| matches!(x, BuildingSlot::Occupied { .. })) {
+        panic!("All building slots are occupied");
+    }
+
+    for i in 0..building_slots.len(){
+        if building_slots[i] == BuildingSlot::Empty{
+            let mut building_slots = building_slots.clone();
+            building_slots[i] = building;
+            return building_slots;
+        }
+    }
+    return building_slots.clone();
 }
