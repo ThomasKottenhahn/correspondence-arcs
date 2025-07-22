@@ -1,8 +1,10 @@
 use std::collections::{hash_map};
 
+use itertools::{iproduct, Itertools};
+
 use crate::data::system::{System, SystemType, Ships, BuildingSlot, BuildingType};
 use crate::data::setup_cards::{SetupCard};
-use crate::data::game_state::{Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ReserveType, ResourceType, TurnState, ResourceSlot};
+use crate::data::game_state::{self, Ambition, AmbitionMarker, AmbitionTypes, Color, GameState, PlayerArea, ReserveType, ResourceSlot, ResourceType, TurnState};
 use crate::data::court_cards::{create_court_deck};
 
 pub fn get_cluster(system_id: u8) -> u8 {
@@ -245,9 +247,9 @@ pub fn setup_game_with_set_seed(setup_card: &SetupCard, seed: u64) -> GameState 
         .map(|a| (a.clone(), Ambition {ambition_type: a.clone(), markers: vec![], discarded_resources: vec![]}))
         .collect();
 
-    let court_draw_pile = create_court_deck(all_colors, seed);
+    let court_draw_pile = create_court_deck(all_colors.clone(), seed);
 
-    return GameState{
+    let mut game_state = GameState{
         players: players.clone().into_iter().map(|p| (p.player.clone(), p)).collect(),
         current_player: Color::Red,
         players_in_round: players.len() as u8,
@@ -268,6 +270,15 @@ pub fn setup_game_with_set_seed(setup_card: &SetupCard, seed: u64) -> GameState 
         ambition_markers: ambition_markers,
         ambitions: ambitions  
     }.redraw_court_cards();
+
+    let reserve_diff = iproduct!(vec![(ReserveType::Cities, -1),(ReserveType::Starports,-1),(ReserveType::Ships,-8)], all_colors);
+
+    for ((r,d),c) in reserve_diff {
+        game_state.update_players_reserve(&c,& r,d);
+    }
+
+    return game_state;
+
 }
 
 pub fn place_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {

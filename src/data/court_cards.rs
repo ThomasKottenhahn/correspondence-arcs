@@ -320,10 +320,14 @@ fn mass_uprising(game_state: &GameState, vox_payload: VoxPayload) -> GameState {
                 }
             });
             
-            GameState {
+            let mut new_game_state = GameState {
                 systems: new_systems.collect(),
                 ..game_state.clone()
-            }.update_players_reserve(&game_state.current_player, &ReserveType::Ships, -(target_systems.len() as i8))
+            };
+            
+            new_game_state.update_players_reserve(&game_state.current_player, &ReserveType::Ships, -(target_systems.len() as i8));
+
+            return new_game_state;
         }
         _ => panic!("Cannot call mass_uprising with {:?}", vox_payload)
     }

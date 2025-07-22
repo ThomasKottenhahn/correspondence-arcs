@@ -81,7 +81,10 @@ fn influence(game_state: &GameState, target_card: u8) -> GameState {
             else {a.clone()}
         }).collect()},
     };
-    return new_game_state.update_players_reserve(&current_player, &ReserveType::Agents, -1);
+
+    new_game_state.update_players_reserve(&current_player, &ReserveType::Agents, -1);
+
+    return new_game_state;
 }
 
 fn battle(game_state: &GameState, target_system: u8, target_player: Color, dice: Vec<Dice>) -> GameState {
@@ -131,15 +134,21 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
                 let players_agents = agents.iter().find(|a| a.color == current_player).unwrap().count;
                 let current_player_area = new_game_state.get_player_area(&current_player);
                 let combined_trophies = current_player_area.add_trophies(tropies);
+
                 let new_players: HashMap<Color, PlayerArea> = new_game_state.players.iter().map(|(c,p)| if *c==current_player 
-                                    { (c.clone(), PlayerArea{ 
-                                        tropies: combined_trophies.clone(),
-                                        ..p.clone()
-                                    }.change_reserve(&ReserveType::Agents, players_agents as i8)
-                                )}
+                                    {
+                                        (c.clone(), PlayerArea{ 
+                                            tropies: combined_trophies.clone(),
+                                            ..p.clone()
+                                            })
+                                    }
                                     else {(c.clone(),p.clone())}
                                 ).collect();
-                return (vox.on_secure)(&GameState { players: new_players, ..new_game_state.clone() }, vox_payload.expect("VoxPayload required"));
+
+                let mut new_game_state = GameState { players: new_players, ..new_game_state.clone() };
+                new_game_state.update_players_reserve(&current_player, &ReserveType::Agents, players_agents as i8);
+
+                return (vox.on_secure)(&new_game_state, vox_payload.expect("VoxPayload required"));
             },
             CourtCard::GuildCard { guild, agents } => {
                 let tropies: Vec<Trophy> = agents.iter()
@@ -155,14 +164,14 @@ fn secure(game_state: &GameState, target_card: u8, vox_payload: Option<VoxPayloa
                                         tropies: combined_trophies.clone(),
                                         guild_cards: new_guild_cards.clone(),
                                         ..p.clone()
-                                    }.change_reserve(&ReserveType::Agents, players_agents as i8)
+                                    }
                                 )}
                                     else {(c.clone(),p.clone())}
                                 ).collect();
-                return GameState {
-                    players: new_players,
-                    ..new_game_state.clone()
-                };
+                let mut new_game_state = GameState { players: new_players, ..new_game_state.clone() };
+                new_game_state.update_players_reserve(&current_player, &ReserveType::Agents, players_agents as i8);
+
+                return new_game_state;
             },
         }
     }
@@ -182,14 +191,15 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
                 if controlled_by != &Some(game_state.current_player.clone()) {
                     panic!("Cannot tax a rival in a System controlled by another player");
                 }
-                let rivals_play_area = new_game_state.get_player_area(&target_player).change_reserve(&ReserveType::Agents, -1);
-                let mut current_player_area = new_game_state.get_player_area(&game_state.current_player);
+                let rivals_play_area = new_game_state.get_player_area(&target_player);
+                let current_player_area = new_game_state.get_player_area(&game_state.current_player);
                 current_player_area.add_trophies(vec![Trophy {
                     trophy_type: ReserveType::Agents,
                     count: 1,
                     player: target_player.clone(),
                 }]);
                 new_game_state.players.insert(target_player.clone(), rivals_play_area);
+                new_game_state.update_players_reserve(&target_player, &ReserveType::Agents, -1);
             }
             new_game_state.systems[target_system as usize] = new_game_state.systems[target_system as usize].use_building(&BuildingType::City, &target_player);
             
@@ -427,33 +437,35 @@ fn score_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameState 
         .collect();
     
     if ambition == AmbitionTypes::Warlord {
-        let players: HashMap<Color,PlayerArea> = new_players.iter().map(|(c,a)| (c.clone(), PlayerArea { tropies: vec![], ..a.clone()})).collect();
-
-        let new_players = game_state.players
+        let trophies: Vec<Trophy> = game_state.players
             .iter()
             .map(|(_,a)| a.tropies.clone())
             .flatten()
-            .fold(players, |p, t| {
-                p.iter()
-                    .map(|(c,a)| (c.clone(), a.change_reserve(&t.trophy_type, t.count as i8)))
-                    .collect()
-            });
-        return GameState {players: new_players, .. game_state.clone()};
+            .collect();
+        
+        let mut new_game_state = game_state.clone();
+
+        for t in trophies {
+            new_game_state.update_players_reserve(&t.player, &t.trophy_type, t.count as i8);
+        }
+
+        return new_game_state;
+        
     }
 
     if ambition == AmbitionTypes::Tyrant {
-        let players: HashMap<Color,PlayerArea> = new_players.iter().map(|(c,a)| (c.clone(), PlayerArea { captives: vec![], ..a.clone()})).collect();
-
-        let new_players = game_state.players
+        let captives: Vec<Agents> = game_state.players
             .iter()
             .map(|(_,a)| a.captives.clone())
             .flatten()
-            .fold(players, |p, t| {
-                p.iter()
-                    .map(|(c,a)| (c.clone(), a.change_reserve(&ReserveType::Agents, t.count as i8)))
-                    .collect()
-            });
-        return GameState {players: new_players, .. game_state.clone()};
+            .collect();
+        let mut new_game_state = game_state.clone();
+
+        for a in captives {
+            new_game_state.update_players_reserve(&a.color, &ReserveType::Agents, a.count as i8);
+        }
+
+        return new_game_state;
     }
 
     GameState {players: new_players, .. game_state.clone()}

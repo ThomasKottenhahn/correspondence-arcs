@@ -159,17 +159,12 @@ impl PlayerArea {
         }
     }
 
-    pub fn change_reserve(&self, reserve_type: &ReserveType, diff: i8) -> PlayerArea {
-        let new_reserve = self.reserve.iter().map(|(k, v)| {
-            if k == reserve_type {
-                let new_value = (*v as i8) + diff;
-                if new_value >= 0 {(k.clone(), new_value as u8)} else {panic!("Cannot take {:?} reserves from {:?} {:?}", -diff, v, k)}
-            }
-            else {
-            (k.clone(), v.clone())
-                }
-        }).collect();
-        PlayerArea { reserve: new_reserve, .. self.clone()}
+    pub fn change_reserve(&mut self, reserve_type: &ReserveType, diff: i8) {
+        let current_value = *self.reserve.get(reserve_type).unwrap();
+        let new_value = (current_value as i8) + diff;
+        if new_value < 0 {panic!("Cannot take {:?} reserves from {:?} {:?}", -diff, current_value, reserve_type)}
+
+        self.reserve.insert(reserve_type.clone(), new_value as u8);
     }
 
     pub fn remove_resource(&self, resource_slot: u8, target_resource: &ResourceType) -> PlayerArea {
@@ -300,19 +295,10 @@ impl GameState {
         self.players.insert(color.clone(), player_area);
     }
 
-    pub fn update_players_reserve(&self, player: &Color, reserve_type: &ReserveType, diff: i8) -> GameState {
-        let new_players = self.players.iter().map(|(color, area)| {
-            if color == player {
-                (color.clone(), area.change_reserve(reserve_type, diff))
-            } else {
-                (color.clone(), area.clone())
-            }
-        }).collect();
-
-        GameState {
-            players: new_players,
-            .. self.clone()
-        }
+    pub fn update_players_reserve(&mut self, player: &Color, reserve_type: &ReserveType, diff: i8) {
+        let mut current_area = self.players.get(player).unwrap().clone();
+        current_area.change_reserve(reserve_type, diff);
+        self.players.insert(player.clone(), current_area.clone());
     }
 
     pub fn redraw_court_cards(&self) -> GameState {

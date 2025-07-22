@@ -1,6 +1,6 @@
 use crate::board::{place_ships, remove_ships};
-use crate::data::game_state::GameState;
-use crate::data::system::{BuildingSlot, BuildingType, System};
+use crate::data::game_state::{Color, GameState};
+use crate::data::system::{self, BuildingSlot, BuildingType, System, SystemType};
 
 pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_system_id: u8, fresh: u8, damaged: u8) -> GameState {
     let mut game_state = game_state.clone();
@@ -70,6 +70,24 @@ pub(crate) fn catapult(game_state: &GameState, origin_system: u8, destination_sy
     if !has_loyal_starport {panic!("Cannot catapult from {:?}, because the system has no loyal Starport", origin_system)}
     
     //Check if we move less or equal to the ships present
+    let (fresh, damaged) = destination_systems
+        .iter()
+        .fold((0, 0), |(fresh_sum, damaged_sum), &(_, fresh, damaged)| {
+            (fresh_sum + fresh, damaged_sum + damaged)
+        });
 
-    todo!()
+    if fresh > ships.fresh || damaged > ships.damaged {panic!("Catapulting {:?} fresh and {:?} damaged Ships when only {:?} fresh and {:?} damaged are present", fresh, damaged, ships.fresh, ships.damaged)}
+
+    
+    let systems: Vec<System>  = destination_systems.iter()
+        .map(|(sys, _, _)| game_state.systems[*sys as usize].clone())
+        .collect();
+
+    //Check only one destination is a Planet System
+
+
+    //Check all can be reached without entering a planet system or rival controlled System
+
+    return destination_systems.iter()
+        .fold(game_state.clone(), |g, (sys, fresh, damaged)| move_ships(&g, origin_system, *sys, *fresh, *damaged))
 }
