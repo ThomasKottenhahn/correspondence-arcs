@@ -322,8 +322,8 @@ fn allocate_resources(game_state: &GameState, configuration: Vec<(u8, ResourceTy
             },
         );
 
-    if config_resources.iter().zip(available_resources.iter()).any(|((_, &config_count), (_, &available_count))| config_count > available_count) {
-        panic!("Trying to allocate more resources than available");
+    if config_resources.iter().any(|(resource, &config_count)| config_count > *available_resources.get(resource).unwrap()) {
+        panic!("Trying to allocate more resources than available: config: {:?}, available: {:?}", config_resources, available_resources);
     }
 
     let new_resource_slots: Vec<ResourceSlot> = current_resource_slots

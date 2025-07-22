@@ -2,13 +2,7 @@
     "title": "Kanban",
     "cols": [
         {
-            "title": "Bugs",
-            "tasks": [],
-            "id": "ol4p1rrmtituy4tx5dqlu8gh",
-            "color": "#eb144c"
-        },
-        {
-            "title": "To-Do",
+            "title": "Backlog",
             "tasks": [
                 {
                     "text": "Vox: Call to Action",
@@ -39,12 +33,25 @@
                     "id": "teocl5y2jcy9n53jnmq1ruvs"
                 },
                 {
-                    "text": "Allocate Dice Results",
-                    "id": "zkt64njan3f2pnhrbvnacvuh"
-                },
-                {
                     "text": "Remove Immutability",
                     "id": "ginfdpnotshdwdlkqnxae6w3"
+                }
+            ],
+            "id": "h261e5dovhzfu5sqh9qyt9px",
+            "color": "var(--vscode-editor-foreground)"
+        },
+        {
+            "title": "Bugs",
+            "tasks": [],
+            "id": "ol4p1rrmtituy4tx5dqlu8gh",
+            "color": "#eb144c"
+        },
+        {
+            "title": "To-Do",
+            "tasks": [
+                {
+                    "text": "Allocate Dice Results",
+                    "id": "zkt64njan3f2pnhrbvnacvuh"
                 }
             ],
             "id": "jfaf045ic9xf3sviz3l2dr0s",
@@ -52,12 +59,7 @@
         },
         {
             "title": "Doing",
-            "tasks": [
-                {
-                    "text": "Remove Reserve, when setting up and update Resourceslots",
-                    "id": "bheit0iahato8c244174tfn6"
-                }
-            ],
+            "tasks": [],
             "id": "to0kc4sk1ozwmt77reeyi9e8",
             "color": "#0693e3"
         },
@@ -83,6 +85,10 @@
                 {
                     "text": "Ambition Scoring",
                     "id": "d144lsoibcijsu0dv41nwy4g"
+                },
+                {
+                    "text": "Remove Reserve, when setting up and update Resourceslots",
+                    "id": "bheit0iahato8c244174tfn6"
                 }
             ],
             "id": "crpwi6ycq8zaa3es3mijqlzr",
@@ -128,5 +134,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1751228393634
+    "timestamp": 1753213497609
 }

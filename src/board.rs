@@ -271,10 +271,16 @@ pub fn setup_game_with_set_seed(setup_card: &SetupCard, seed: u64) -> GameState 
         ambitions: ambitions  
     }.redraw_court_cards();
 
-    let reserve_diff = iproduct!(vec![(ReserveType::Cities, -1),(ReserveType::Starports,-1),(ReserveType::Ships,-8)], all_colors);
+    let reserve_diff = iproduct!(vec![(ReserveType::Cities, -1),(ReserveType::Starports,-1),(ReserveType::Ships,-8)], all_colors.clone());
 
     for ((r,d),c) in reserve_diff {
         game_state.update_players_reserve(&c,& r,d);
+    }
+
+    for p in all_colors {
+        let current = game_state.players.get(&p).unwrap();
+        let new = current.update_resource_slots().0;
+        game_state.players.insert(p, new);
     }
 
     return game_state;
