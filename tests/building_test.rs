@@ -6,7 +6,7 @@ mod test{
     use correspondence_arcs::data::system::{BuildingSlot, BuildingType, Ships, System, SystemType};
     
     use correspondence_arcs::board;
-    use correspondence_arcs::actions::{self, moving};
+    use correspondence_arcs::actions;
 
     #[test]
     fn test_building_ships(){

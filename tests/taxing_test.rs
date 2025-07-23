@@ -2,7 +2,7 @@
 mod test{
     use correspondence_arcs::data::setup_cards::{SetupCard, two_player_frontiers};
 
-    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BasicAction, Color, GameState, ReserveType, ResourceType, TurnState};
+    use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BasicAction, Color, GameState, ReserveType, ResourceType, TurnState, ResourceSlot};
     use correspondence_arcs::data::system::{Ships, System, SystemType, BuildingSlot, BuildingType};
     use correspondence_arcs::board;
     use correspondence_arcs::actions;
@@ -37,6 +37,11 @@ mod test{
         }
 
         let g2 = actions::execute_action(&g1, Action::AllocateResources { configuration: vec![(0,ResourceType::Psionics), (1,ResourceType::Material), (2,ResourceType::Psionics)] });
+
+        assert_eq!(
+            g2.players.get(&Color::Red).unwrap().resource_slots,
+            vec![ResourceSlot::Used { keys: 3, resource: ResourceType::Psionics }, ResourceSlot::Used { keys: 1, resource: ResourceType::Material }, ResourceSlot::Used { keys: 1, resource: ResourceType::Psionics }, ResourceSlot::Covered { keys: 2 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 3 }]
+        )
 
     }
 

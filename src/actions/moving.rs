@@ -1,6 +1,6 @@
 use crate::board::{place_ships, remove_ships};
-use crate::data::game_state::{Color, GameState};
-use crate::data::system::{self, BuildingSlot, BuildingType, System, SystemType};
+use crate::data::game_state::GameState;
+use crate::data::system::{BuildingSlot, BuildingType, System};
 
 pub fn move_ships(game_state: &GameState, origin_system_id: u8, destination_system_id: u8, fresh: u8, damaged: u8) -> GameState {
     let mut game_state = game_state.clone();

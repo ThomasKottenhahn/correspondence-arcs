@@ -3,12 +3,14 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use rand::Rng;
 
-use crate::data::game_state::{Action, ActionCard, ActionType, Agents, Ambition, AmbitionTypes, BasicAction, BuildType, Color, Dice, GameState, PlayerArea, ReserveType, ResourceSlot, ResourceType, Trophy, TurnState};
+use crate::data::game_state::{Action, ActionType, Agents, BasicAction, BuildType, Color, Dice, GameState, PlayerArea, ReserveType, ResourceSlot, ResourceType, Trophy, TurnState};
 use crate::data::court_cards::{CourtCard, Guild, VoxPayload};
-use crate::data::system::{Ships, System, BuildingSlot, BuildingType, SystemType};
+use crate::data::system::{System, BuildingSlot, BuildingType, SystemType};
 use crate::board::{place_ships, remove_ships};
 
 mod building;
+mod tricktaking;
+mod ending;
 pub mod moving;
 
 fn use_action_pip(game_state: &GameState) -> GameState {
@@ -220,22 +222,6 @@ fn tax(game_state: &GameState, target_system: u8, target_player: Color) -> GameS
     new_game_state
 }
 
-fn declare_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameState {
-    let highest_ambition = game_state.ambition_markers.iter().max_by_key(|am| if am.flipped {am.first_place_flipped} else {am.first_place});
-    let highest_ambition = match highest_ambition {
-        Some(a) => a,
-        None => panic!("Cannot declare, because no AmbitionMarker is available")
-    };
-    let mut ambitions = game_state.ambitions.clone();
-    let ambition_box = ambitions.get(&ambition).unwrap();
-    ambitions.insert(ambition, Ambition{markers: ambition_box.markers.iter().chain(vec![highest_ambition]).cloned().collect(), .. ambition_box.clone()});
-    GameState{
-        ambition_markers: game_state.ambition_markers.iter().filter(|am| am != &highest_ambition).cloned().collect(),
-        ambitions: ambitions,
-        .. game_state.clone()
-    }
-}
-
 fn execute_prelude_action(game_state: &GameState, action: BasicAction, resource: Option<ResourceType>) -> GameState {
     match (action.clone(), resource.clone().expect("No Resource in ResourceSlot"), game_state.lead_card.clone().unwrap().0.action_type) {
         (BasicAction::Build { target_system, build_type }, ResourceType::Material, _) => building::build(game_state, target_system, build_type),
@@ -376,225 +362,6 @@ fn allocate_resources(game_state: &GameState, configuration: Vec<(u8, ResourceTy
     }
 }
 
-fn score_ambition(game_state: &GameState, ambition: AmbitionTypes) -> GameState {
-    let evaluation = match ambition {
-        AmbitionTypes::Tycoon => |a: PlayerArea| a.get_resource_count(ResourceType::Fuel) + a.get_resource_count(ResourceType::Material),
-        AmbitionTypes::Tyrant => |a: PlayerArea| a.get_captives(),
-        AmbitionTypes::Warlord => |a: PlayerArea| a.get_trophies(),
-        AmbitionTypes::Keeper => |a: PlayerArea| a.get_resource_count(ResourceType::Relics),
-        AmbitionTypes::Empath => |a: PlayerArea| a.get_resource_count(ResourceType::Psionics),
-    };
-    let ranking = game_state.players.iter()
-        .map(|(c,a)| (Some(c.clone()), evaluation(a.clone())))
-        .chain(
-            vec![(None, game_state.ambitions.get(&ambition).unwrap().discarded_resources.len() as u8)]
-        )
-        .sorted_by(|a, b| b.1.cmp(&a.1))
-        .collect::<HashMap<Option<Color>, u8>>();
-
-    let points: HashMap<Option<Color>, usize> = ranking
-        .iter()
-        .map(|(c,s)|{
-            match c {
-                Some(c) => {
-                    let higher_count = ranking.iter().filter(|(_c2, s2)| *s2 > s).count();
-                    if higher_count == 0 && ranking.iter().all(|(_c2,s2)| s2 < s) {
-                        // This player is the sole highest
-                        let points = game_state.ambitions
-                            .get(&ambition)
-                            .unwrap()
-                            .markers
-                            .iter()
-                            .map(|m| if m.flipped {m.first_place_flipped as usize} else {m.first_place as usize}).sum::<usize>()
-                            + match game_state.players.get(&c).unwrap().reserve.get(&ReserveType::Cities).unwrap() {
-                                0 => 5,
-                                1 => 2,
-                                _ => 0
-                            };
-                        (Some((*c).clone()), points)
-                    } else if higher_count == 1 || higher_count == 0 {
-                        // Only one player is higher, so this is second place or tied first
-                        let points = game_state.ambitions
-                            .get(&ambition)
-                            .unwrap()
-                            .markers
-                            .iter()
-                            .map(|m| if m.flipped {m.second_place_flipped as usize} else {m.second_place as usize}).sum();
-                        (Some((*c).clone()), points)
-                    } else {
-                        (Some((*c).clone()), 0)
-                    }
-                },
-                None => (None, 0)
-            }
-        })
-        .filter(|(c,_s)| *c != None)
-        .collect();
-
-    let new_players: HashMap<Color, PlayerArea> = game_state.players
-        .iter()
-        .map(|(c,a)| (c.clone(), PlayerArea { power: a.power + *points.get(&Some(c.clone())).unwrap() as u8, ..a.clone()}))
-        .collect();
-    
-    if ambition == AmbitionTypes::Warlord {
-        let trophies: Vec<Trophy> = game_state.players
-            .iter()
-            .map(|(_,a)| a.tropies.clone())
-            .flatten()
-            .collect();
-        
-        let mut new_game_state = game_state.clone();
-
-        for t in trophies {
-            new_game_state.update_players_reserve(&t.player, &t.trophy_type, t.count as i8);
-        }
-
-        return new_game_state;
-        
-    }
-
-    if ambition == AmbitionTypes::Tyrant {
-        let captives: Vec<Agents> = game_state.players
-            .iter()
-            .map(|(_,a)| a.captives.clone())
-            .flatten()
-            .collect();
-        let mut new_game_state = game_state.clone();
-
-        for a in captives {
-            new_game_state.update_players_reserve(&a.color, &ReserveType::Agents, a.count as i8);
-        }
-
-        return new_game_state;
-    }
-
-    GameState {players: new_players, .. game_state.clone()}
-}
-
-fn end_chapter(game_state: &GameState) -> GameState {
-    let new_game_state = game_state.ambitions.iter()
-        .filter(|(_, a)| a.markers.len() != 0)
-        .map(|(t, a)| (t.clone(), a.clone()))
-        .fold(game_state.clone(), |gs, (ambition_type, _)| {
-            score_ambition(&gs, ambition_type.clone())
-        });
-
-    //Todo reshuffle cards
-
-    println!("End Chapter");
-    return new_game_state;
-}
-
-fn end_round(game_state: &GameState) -> GameState {
-    println!("Ending Round");
-    //determine new Initiative, discard Cards
-    let mut new_game_state = game_state.clone();
-
-    let lead = game_state.lead_card.as_ref().unwrap();
-    let follow_cards = game_state.follow_cards.clone();
-
-    new_game_state.initiative =  match new_game_state.seized.clone() {
-        Some(c) => c,
-        None => {
-            game_state.follow_cards.iter().chain(vec![lead]).filter(|(c, f, _)| c.action_type == lead.0.action_type && *f).max_by_key(|(c, _, _)| c.number).unwrap().2.clone()
-        }
-    };
-
-    new_game_state.current_player = new_game_state.initiative.clone();
-
-    new_game_state.action_discard.push(lead.0.clone());
-    new_game_state.action_discard = new_game_state.action_discard.iter().cloned().chain(follow_cards.iter().map(|(c, _, _)| c.clone())).collect();
-    new_game_state.follow_cards = vec![];
-    new_game_state.turn_state = TurnState::TrickTaking;
-    new_game_state.players_in_round = new_game_state.players.iter().filter(|(_, a)| a.action_cards.len() != 0).count() as u8;
-
-    if new_game_state.players.iter().filter(|(_, area)| area.action_cards.len() != 0).count() == 0 {end_chapter(&new_game_state)} else {new_game_state}
-}
-
-fn end_turn(game_state: &GameState) -> GameState {
-    let player_order: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow].iter().take(game_state.players.len()).cloned().collect();
-    let mut new_game_state = game_state.clone();
-    new_game_state.turn_state = TurnState::TrickTaking;
-    new_game_state.current_player = player_order[(player_order.iter().position(|c| *c == new_game_state.current_player).unwrap() + 1)%player_order.len()].clone();
-    new_game_state.systems = new_game_state.systems.iter().map(|s| s.refresh_buildings()).collect();
-
-    // last player in Turn Order
-    if (1 + game_state.follow_cards.len()) as u8 == game_state.players_in_round {
-        return end_round(&new_game_state);
-    } else {
-        new_game_state
-    }
-}
-
-fn play_lead_card(game_state: &GameState, card: ActionCard, declare: Option<AmbitionTypes>) -> GameState {
-    let mut new_game_state = game_state.clone();
-    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
-    player_area.remove_action_card(card.clone());
-    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
-    new_game_state.lead_card = Some((card.clone(), true, game_state.current_player.clone()));
-    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type.clone(), pips_left: card.pips };
-    match declare {
-        Some(ambition) => {
-            match &card.declared_ambition {
-                Some(possible_declare) => if possible_declare == &ambition 
-                        {declare_ambition(game_state, ambition)}
-                    else
-                        {panic!("AmbitionType on card {:?} does not match Ambition {:?}", &card, ambition)},
-                None => panic!("Cannot declare Ambition with {:?}", card),
-            }
-        },
-        None => new_game_state 
-    }
-}
-
-fn surpass(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {
-    let (lead_card, _, _) = game_state.lead_card.as_ref().expect("Cannot Surpass, if no lead card exists");
-    if card.action_type != lead_card.action_type {panic!("Cannot surpass with other card type")}
-    if card.number < lead_card.number {panic!("Cannot surpass with a lower card")};
-    let mut new_game_state = game_state.clone();
-    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
-    player_area.remove_action_card(card.clone());
-    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
-    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
-    match seize {
-        Some(_) => todo!(),
-        None => {},
-    }
-    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: card.pips };
-    new_game_state
-}
-
-fn copy(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {
-    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
-    let mut new_game_state = game_state.clone();
-    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
-    player_area.remove_action_card(card.clone());
-    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
-    new_game_state.follow_cards.push((card.clone(), false, game_state.current_player.clone()));
-    match seize {
-        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
-        None => {},
-    }
-    new_game_state.turn_state = TurnState::Prelude { action_type: lead_card.action_type.clone(), pips_left: 1 };
-    new_game_state
-}
-
-fn pivot(game_state: &GameState, card: ActionCard, seize: Option<ActionCard>) -> GameState {
-    let (lead_card, _, _) = game_state.lead_card.as_ref().unwrap();
-    if card.action_type == lead_card.action_type {panic!("Cannot Pivot with same card type")};
-    let mut new_game_state = game_state.clone();
-    let mut player_area = new_game_state.get_player_area(&new_game_state.current_player);
-    player_area.remove_action_card(card.clone());
-    new_game_state.players.insert(new_game_state.current_player.clone(), player_area);
-    new_game_state.follow_cards.push((card.clone(), true, game_state.current_player.clone()));
-    match seize {
-        Some(_) => new_game_state.seized = Some(new_game_state.current_player.clone()),
-        None => {},
-    }
-    new_game_state.turn_state = TurnState::Prelude { action_type: card.action_type, pips_left: 1 };
-    new_game_state
-}
-
 pub fn execute_actions(game_state: &GameState, actions: Vec<Action>) -> GameState {
     return actions
         .iter()
@@ -605,10 +372,10 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
     match &game_state.turn_state {
         TurnState::TrickTaking => {
             match action {
-                Action::PlayLeadCard { card, declare } => play_lead_card(game_state, card, declare),
-                Action::Surpass { card, seize } => surpass(game_state, card, seize),
-                Action::Copy { card, seize } => copy(game_state, card, seize),
-                Action::Pivot { card, seize } => pivot(game_state, card, seize),
+                Action::PlayLeadCard { card, declare } => tricktaking::play_lead_card(game_state, card, declare),
+                Action::Surpass { card, seize } => tricktaking::surpass(game_state, card, seize),
+                Action::Copy { card, seize } => tricktaking::copy(game_state, card, seize),
+                Action::Pivot { card, seize } => tricktaking::pivot(game_state, card, seize),
                 _ => panic!("Can only Execute TrickTaking Actions")
             }
         },
@@ -630,7 +397,7 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
             }
         },
         TurnState::Actions { action_type, pips_left } => {
-            if action == Action::EndTurn {return end_turn(game_state)}
+            if action == Action::EndTurn {return ending::end_turn(game_state)}
             if *pips_left == 0 {panic!("No Action pips left in {:?}, when executing {:?}", game_state.turn_state, action)}
             return match (action_type, action) {
                 (ActionType::Administration, Action::MainAction { basic_action }) => match basic_action {
