@@ -161,6 +161,8 @@ fn allocate_resources(game_state: &GameState, configuration: Vec<(u8, ResourceTy
     GameState {
         players: new_players,
         resource_reserve: new_resource_reserve,
+        turn_state: game_state.next_turn_states[0].clone(),
+        next_turn_states: game_state.next_turn_states[1..].to_vec(),
         .. game_state.clone()
     }
 }

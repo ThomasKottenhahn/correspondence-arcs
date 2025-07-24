@@ -50,6 +50,10 @@
             "title": "To-Do",
             "tasks": [
                 {
+                    "text": "Catapult",
+                    "id": "inn78qpwre29dwv8anrm4kwt"
+                },
+                {
                     "text": "Allocate Dice Results",
                     "id": "zkt64njan3f2pnhrbvnacvuh"
                 }
@@ -79,8 +83,8 @@
                     "id": "l8lxzt7uvejlicsguyu0fchq"
                 },
                 {
-                    "text": "Allocate Resources",
-                    "id": "q660pli0gzvgvxsspvr45v5r"
+                    "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
+                    "id": "z5pg8rkwufgci0l7i3miatys"
                 },
                 {
                     "text": "Ambition Scoring",
@@ -108,6 +112,10 @@
                     "id": "kirijxvs5msbakmncqdz5wx4"
                 },
                 {
+                    "text": "Allocate Resources",
+                    "id": "q660pli0gzvgvxsspvr45v5r"
+                },
+                {
                     "text": "Influence",
                     "id": "aljbyz8gguuk3lcgafh1jnzs"
                 },
@@ -120,10 +128,6 @@
                     "id": "fvkwmx8mls970d6qx4oy1qoe"
                 },
                 {
-                    "text": "Change Allocate Resources in a way that multiple people can allocate multiple resources at once",
-                    "id": "z5pg8rkwufgci0l7i3miatys"
-                },
-                {
                     "text": "Vox: Mass Uprising",
                     "id": "rci7iw6pu1s0zzz16c0zqbye"
                 }
@@ -134,5 +138,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1753213497609
+    "timestamp": 1753388249450
 }

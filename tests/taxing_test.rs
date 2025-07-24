@@ -41,7 +41,10 @@ mod test{
         assert_eq!(
             g2.players.get(&Color::Red).unwrap().resource_slots,
             vec![ResourceSlot::Used { keys: 3, resource: ResourceType::Psionics }, ResourceSlot::Used { keys: 1, resource: ResourceType::Material }, ResourceSlot::Used { keys: 1, resource: ResourceType::Psionics }, ResourceSlot::Covered { keys: 2 }, ResourceSlot::Covered { keys: 1 }, ResourceSlot::Covered { keys: 3 }]
-        )
+        );
+
+        assert_eq!(g2.turn_state, TurnState::Actions { action_type: ActionType::Administration, pips_left: 3 });
+        assert_eq!(g2.next_turn_states, vec![]);
 
     }
 
@@ -49,7 +52,6 @@ mod test{
     fn test_tax_rival_city() {
         let test_setup: SetupCard = two_player_frontiers();
         let mut game_state: GameState = board::setup_game(&test_setup);
-
         
         game_state.add_action_cards(&Color::Red, vec![
             ActionCard { action_type: ActionType::Administration, number: 2, pips: 4, declared_ambition: Some(AmbitionTypes::Tycoon) },
