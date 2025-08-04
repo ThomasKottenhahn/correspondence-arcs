@@ -12,6 +12,7 @@ mod influencing;
 mod battling;
 mod securing;
 mod taxing;
+mod allocating;
 pub mod moving;
 
 fn use_action_pip(game_state: &GameState) -> GameState {
@@ -41,129 +42,6 @@ fn execute_prelude_action(game_state: &GameState, action: BasicAction, resource:
         (BasicAction::Secure { card_id, vox_payload }, ResourceType::Psionics, ActionType::Agression) => securing::secure(game_state, card_id, vox_payload),
         (BasicAction::Battle { target_system, target_player, dice }, ResourceType::Psionics, ActionType::Agression) => battling::battle(game_state, target_system, target_player, dice),
         _ => panic!("Cannot execute {:?} with {:?} resource and {:?} lead", action.clone(), resource.clone(), game_state.lead_card.clone().unwrap().0.action_type)
-    }
-}
-
-fn allocate_resources(game_state: &GameState, configuration: Vec<(u8, ResourceType)>) -> GameState {
-    let (current_player, additional_resources) = match &game_state.turn_state {
-        TurnState::AllocateResources { player, resources } => (player, resources),
-        _ => panic!("Cannot allocate resources in {:?}", game_state.turn_state)
-    };
-    let current_resource_slots = game_state.players.get(&current_player).unwrap().resource_slots.clone();
-
-    let available_resources: Vec<ResourceType> = current_resource_slots
-        .iter()
-        .filter_map(|r| {
-                    match r {
-                        ResourceSlot::Used { keys: _, resource } => Some(resource.clone()),
-                        _ => None
-                    }
-                })
-                .chain(additional_resources.iter().cloned())
-                .collect();
-
-    let available_resourceslots = current_resource_slots
-        .iter()
-        .filter(|s| match s {
-            ResourceSlot::Used {..} | ResourceSlot::Unused {..} => true,
-            _ => false 
-        })
-        .count();
-
-    if configuration.len() > available_resourceslots {panic!("Cannot allocate {:?} resources into {:?} available ResourceSlots", configuration.len(), available_resourceslots)}
-
-    if configuration.iter().map(|(i,_)|i).tuple_windows().any(|(i1,i2)| i1==i2) {panic!("Configuration includes index duplicates")}
-
-    let config_resources = configuration
-        .iter()
-        .map(|(_,r)| r)
-        .fold(
-            vec![
-            (ResourceType::Fuel, 0),
-            (ResourceType::Material, 0),
-            (ResourceType::Weapons, 0),
-            (ResourceType::Relics, 0),
-            (ResourceType::Psionics, 0),
-            ]
-            .into_iter()
-            .collect::<HashMap<ResourceType, u8>>(),
-            |mut acc, r| {
-            *acc.entry(r.clone()).or_insert(0) += 1;
-            acc
-            },
-        );
-        
-    let available_resources = available_resources
-        .iter()
-        .fold(
-            vec![
-            (ResourceType::Fuel, 0),
-            (ResourceType::Material, 0),
-            (ResourceType::Weapons, 0),
-            (ResourceType::Relics, 0),
-            (ResourceType::Psionics, 0),
-            ]
-            .into_iter()
-            .collect::<HashMap<ResourceType, u8>>(),
-            |mut acc, r| {
-            *acc.entry(r.clone()).or_insert(0) += 1;
-            acc
-            },
-        );
-
-    if config_resources.iter().any(|(resource, &config_count)| config_count > *available_resources.get(resource).unwrap()) {
-        panic!("Trying to allocate more resources than available: config: {:?}, available: {:?}", config_resources, available_resources);
-    }
-
-    let new_resource_slots: Vec<ResourceSlot> = current_resource_slots
-        .iter()
-        .zip(
-            (0..current_resource_slots.len()).map(|i| {
-                configuration.iter()
-                    .find(|(idx, _)| *idx as usize == i)
-                    .map(|(_, r)| r.clone())
-            })
-        )
-        .map(|(s,r)| {
-            match (s,r) {
-                (ResourceSlot::Used { keys, ..} | ResourceSlot::Unused { keys } , None) => ResourceSlot::Unused { keys: *keys },
-                (ResourceSlot::Used { keys, ..} | ResourceSlot::Unused { keys }, Some(resource)) => ResourceSlot::Used { keys: *keys, resource: resource },
-                (ResourceSlot::Covered { keys }, None) => ResourceSlot::Covered { keys: *keys },
-                (ResourceSlot::Covered { ..}, Some(_)) => panic!("Cannot allocate Resource in Covered ResourceSlot"),
-            }
-        })
-        .collect();
-
-    let new_players: HashMap<Color, PlayerArea> = game_state.players
-            .iter()
-            .map(|(c,p)|if c == current_player {(c.clone(),PlayerArea{resource_slots: new_resource_slots.clone(), ..p.clone()})} else {(c.clone(),p.clone())})
-            .collect();
-
-    let overflow_resources: Vec<ResourceType> = available_resources.iter()
-        .flat_map(|(resource, &available_count)| {
-            let used_count = config_resources.get(resource).cloned().unwrap_or(0);
-            if available_count > used_count {
-                std::iter::repeat(resource.clone()).take((available_count - used_count) as usize).collect::<Vec<_>>()
-            } else {
-                Vec::new()
-            }
-        })
-        .collect();
-
-    let new_resource_reserve: HashMap<ResourceType,u8> = game_state.resource_reserve
-        .iter()
-        .map(|(r,c)|{
-            let overflow = overflow_resources.iter().filter(|res| res == &r).count();
-            (r.clone(), c+overflow as u8)
-        })
-        .collect();
-
-    GameState {
-        players: new_players,
-        resource_reserve: new_resource_reserve,
-        turn_state: game_state.next_turn_states[0].clone(),
-        next_turn_states: game_state.next_turn_states[1..].to_vec(),
-        .. game_state.clone()
     }
 }
 
@@ -234,7 +112,7 @@ pub fn execute_action(game_state: &GameState, action: Action) -> GameState {
             }
         }
         TurnState::AllocateResources { ..} => match action {
-            Action::AllocateResources { configuration } => allocate_resources(game_state, configuration),
+            Action::AllocateResources { configuration } => allocating::allocate_resources(game_state, configuration),
             _ => panic!("Can only AllocateResources in the AllocateResources Turnstate not {:?}", action)
         },
         TurnState::AllocateDiceResults { target_system, target_player, self_hits, hits, building_hits, keys } => todo!(),

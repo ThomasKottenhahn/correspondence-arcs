@@ -67,6 +67,20 @@ pub enum Dice{
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub enum HitTarget {
+    Damaged,
+    Fresh,
+    Destroyed,
+    Building {building_id: u8}
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum RaidTarget{
+    Resource {resource_id: u8},
+    GuildCard {card_id: u8}
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BasicAction{
     Build {target_system: u8, build_type: BuildType},
     Repair {target_system: u8, build_type: BuildType},
@@ -92,6 +106,7 @@ pub enum Action{
     EndPrelude,
     MainAction {basic_action: BasicAction},
     AllocateResources {configuration: Vec<(u8,ResourceType)>},
+    AllocateDiceResults {own_hits: Vec<HitTarget>, other_hits: Vec<HitTarget>, raid_targets: Vec<RaidTarget>},
     EndTurn
 }
 

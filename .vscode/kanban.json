@@ -50,10 +50,6 @@
             "title": "To-Do",
             "tasks": [
                 {
-                    "text": "Catapult",
-                    "id": "inn78qpwre29dwv8anrm4kwt"
-                },
-                {
                     "text": "Allocate Dice Results",
                     "id": "zkt64njan3f2pnhrbvnacvuh"
                 }
@@ -70,6 +66,10 @@
         {
             "title": "Untested",
             "tasks": [
+                {
+                    "text": "Catapult",
+                    "id": "inn78qpwre29dwv8anrm4kwt"
+                },
                 {
                     "text": "Blocking ResourceSlots",
                     "id": "aezypf9cu17amaos9gg03l5e"
@@ -89,10 +89,6 @@
                 {
                     "text": "Ambition Scoring",
                     "id": "d144lsoibcijsu0dv41nwy4g"
-                },
-                {
-                    "text": "Remove Reserve, when setting up and update Resourceslots",
-                    "id": "bheit0iahato8c244174tfn6"
                 }
             ],
             "id": "crpwi6ycq8zaa3es3mijqlzr",
@@ -130,6 +126,10 @@
                 {
                     "text": "Vox: Mass Uprising",
                     "id": "rci7iw6pu1s0zzz16c0zqbye"
+                },
+                {
+                    "text": "Remove Reserve, when setting up and update Resourceslots",
+                    "id": "bheit0iahato8c244174tfn6"
                 }
             ],
             "id": "r2c7wwti7g00q6vvphhl7c38",
@@ -138,5 +138,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1753388249450
+    "timestamp": 1753455569114
 }

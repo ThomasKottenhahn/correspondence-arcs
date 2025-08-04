@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod test{
+    use std::collections::HashMap;
+
     use correspondence_arcs::data::setup_cards::{SetupCard, two_player_frontiers};
 
     use correspondence_arcs::data::game_state::{Action, ActionCard, ActionType, AmbitionTypes, BasicAction, BuildType, Color, GameState, ResourceType};
@@ -29,7 +31,7 @@ mod test{
                 assert_eq!(system_id, &17);
                 assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Material });
                 assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Red, building_type: BuildingType::Starport, used: true }]);
-                assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 4, damaged: 0 }, Ships { player: Color::Blue, fresh: 0, damaged: 0 }]);
+                assert_eq!(ships.clone(), [(Color::Red,Ships { fresh: 4, damaged: 0 }), (Color::Blue, Ships { fresh: 0, damaged: 0 })].iter().cloned().collect::<HashMap<Color, Ships>>());
                 assert_eq!(controlled_by, &Some(Color::Red));
                 assert_eq!(connects_to, &vec![3,16])
             }
@@ -55,7 +57,7 @@ mod test{
 
         match &new_game_state.systems[target_system as usize] {
             System::Used {ships, controlled_by, ..} => {
-                assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 4, damaged: 0 }, Ships { player: Color::Blue, fresh: 0, damaged: 0 }]);
+                assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 4, damaged: 0 }), (Color::Blue, Ships { fresh: 0, damaged: 0 })].iter().cloned().collect::<HashMap<Color,Ships>>());
                 assert_eq!(controlled_by, &Some(Color::Red));
             }
             _ => panic!("Expected Used system variant")

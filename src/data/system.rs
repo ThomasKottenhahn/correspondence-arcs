@@ -1,8 +1,9 @@
+use std::collections::HashMap;
+
 use super::game_state::{Color, ResourceType};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Ships {
-    pub player: Color,
     pub fresh: u8,
     pub damaged: u8
 }
@@ -55,7 +56,7 @@ pub enum System {
     system_id: u8,
     system_type: SystemType,
     building_slots: Vec<BuildingSlot>,
-    ships: Vec<Ships>,
+    ships: HashMap<Color,Ships>,
     controlled_by: Option<Color>,
     connects_to: Vec<u8>
     }
@@ -108,7 +109,10 @@ impl System{
     pub fn has_presence(self: &System, player_color: &Color) -> bool {
         match self {
             System::Unused => false,
-            System::Used {ships, ..} => ships.iter().filter(|x| x.player==*player_color && (x.fresh > 0 || x.damaged > 0)).count() == 1
+            System::Used {ships, ..} => {
+                let s =ships.get(player_color).unwrap();
+                s.damaged >= 1 || s.fresh >= 1
+            }
         }
     }
 
@@ -122,13 +126,13 @@ impl System{
                 ships,
                 connects_to, ..
             } => {
-                let (new_controlled_by, _) = ships.iter().fold((None, 0), |acc: (Option<Color>, u8), s| {
+                let (new_controlled_by, _) = ships.iter().fold((None, 0), |acc: (Option<Color>, u8), (c,s)| {
                     match acc {
-                        (None, max_count) => if s.fresh > max_count {(Some(s.player.clone()), s.fresh)} else {(None, max_count)},
-                        (Some(ref max_player), max_count) => {
+                        (None, max_count) => if s.fresh > max_count {(Some(c.clone()), s.fresh)} else {(None, max_count)},
+                        (Some(max_player), max_count) => {
                             if s.fresh > max_count {
-                                (Some(s.player.clone()), s.fresh)
-                            } else if s.fresh == max_count && s.player != *max_player && s.fresh != 0 {
+                                (Some(c.clone()), s.fresh)
+                            } else if s.fresh == max_count && c != &max_player && s.fresh != 0 {
                                 (None, max_count)
                             } else {
                                 (Some(max_player.clone()), max_count)
@@ -152,10 +156,7 @@ impl System{
         match self {
             System::Unused => 0,
             System::Used { ships, .. } => {
-                ships
-                    .iter()
-                    .find(|s| s.player == *color)
-                    .map_or(0, |s| s.fresh)
+                ships.get(color).unwrap().fresh
             }
         }
     }
@@ -164,10 +165,8 @@ impl System{
         match self {
             System::Unused => 0,
             System::Used { ships, .. } => {
-                ships
-                    .iter()
-                    .find(|s| s.player == *color)
-                    .map_or(0, |s| s.fresh + s.damaged)
+                let s = ships.get(color).unwrap();
+                s.fresh + s.damaged
             }
         }
     }

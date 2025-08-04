@@ -25,7 +25,7 @@ mod test {
 
         match &new_game_state.systems[origin_system as usize] {
             System::Used {ships, controlled_by, ..} => {
-                assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 2, damaged: 0 }, Ships { player: Color::Blue, fresh: 0, damaged: 0 }]);
+                assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 2, damaged: 0 }), (Color::Blue, Ships {  fresh: 0, damaged: 0 })].iter().cloned().collect());
                 assert_eq!(controlled_by, &Some(Color::Red))
             }
             _ => panic!("Expected Used System Variant")
@@ -33,7 +33,7 @@ mod test {
 
         match &new_game_state.systems[destination_system as usize] {
             System::Used {ships, controlled_by, ..} => {
-                assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 1, damaged: 0 }, Ships { player: Color::Blue, fresh: 0, damaged: 0 }]);
+                assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 1, damaged: 0 }), (Color::Blue, Ships {  fresh: 0, damaged: 0 })].iter().cloned().collect());
                 assert_eq!(controlled_by, &Some(Color::Red))
             }
             _ => panic!("Expected Used System Variant")
@@ -59,7 +59,7 @@ mod test {
 
         match &new_game_state.systems[origin_system as usize] {
             System::Used {ships, controlled_by, ..} => {
-                assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 0, damaged: 0 }, Ships { player: Color::Blue, fresh: 0, damaged: 0 }]);
+                assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 0, damaged: 0 }), (Color::Blue, Ships { fresh: 0, damaged: 0 })].iter().cloned().collect());
                 assert_eq!(controlled_by, &None)
             }
             _ => panic!("Expected Used System Variant")
@@ -67,7 +67,7 @@ mod test {
 
         match &new_game_state.systems[destination_system as usize] {
             System::Used {ships, controlled_by, ..} => {
-                assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 3, damaged: 0 }, Ships { player: Color::Blue, fresh: 0, damaged: 0 }]);
+                assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 3, damaged: 0 }), (Color::Blue, Ships {  fresh: 0, damaged: 0 })].iter().cloned().collect());
                 assert_eq!(controlled_by, &Some(Color::Red))
             }
             _ => panic!("Expected Used System Variant")

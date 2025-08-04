@@ -1,4 +1,4 @@
-use std::collections::{hash_map};
+use std::collections::{hash_map, HashMap};
 
 use itertools::{iproduct, Itertools};
 
@@ -17,7 +17,7 @@ pub fn get_cluster(system_id: u8) -> u8 {
 
 fn create_reach(setup_card: &SetupCard) -> Vec<System> {
     let all_colors: Vec<Color> = vec![Color::Red, Color::Blue, Color::White, Color::Yellow];
-    let empty_ships: Vec<Ships> = all_colors[0..(setup_card.players as usize)].iter().map(|x| Ships{player: x.clone(), fresh: 0, damaged: 0}).collect();
+    let empty_ships: HashMap<Color,Ships> = all_colors[0..(setup_card.players as usize)].iter().map(|x| (x.clone(), Ships{fresh: 0, damaged: 0})).collect();
 
     let mut systems:Vec<System> = vec![];
     // Create Gates
@@ -287,33 +287,23 @@ pub fn setup_game_with_set_seed(setup_card: &SetupCard, seed: u64) -> GameState 
 
 }
 
-pub fn place_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
-    let mut new_ships: Vec<Ships> = vec![];
-    for ships_struct in ships{
-        if &ships_struct.player == player {
-            let mut ships_struct = ships_struct.clone();
-            ships_struct.fresh = ships_struct.fresh + fresh;
-            ships_struct.damaged = ships_struct.damaged + damaged;
-            new_ships.push(ships_struct);
-        } else {
-            new_ships.push(ships_struct.clone());
-        }
-    }
+pub fn place_ships(ships: &HashMap<Color,Ships>, player: &Color, fresh: u8, damaged: u8) -> HashMap<Color,Ships> {
+    let mut new_ships: HashMap<Color,Ships> = ships.clone();
+    new_ships.insert(player.clone(), {
+        let s = ships.get(player).unwrap();
+        Ships { fresh: s.fresh + fresh, damaged: s.damaged + damaged }
+    });
     return new_ships;
 }
 
-pub fn remove_ships(ships: &Vec<Ships>, player: &Color, fresh: u8, damaged: u8) -> Vec<Ships> {
-    let mut new_ships: Vec<Ships> = vec![];
-    for ships_struct in ships{
-        if &ships_struct.player == player {
-            let mut ships_struct = ships_struct.clone();
-            ships_struct.fresh = ships_struct.fresh.checked_sub(fresh).expect("Tried to move more fresh ships than available");
-            ships_struct.damaged = ships_struct.damaged.checked_sub(damaged).expect("Tried to move more damaged ships than available");
-            new_ships.push(ships_struct);
-        } else {
-            new_ships.push(ships_struct.clone());
-        }
-    }
+pub fn remove_ships(ships: &HashMap<Color,Ships>, player: &Color, fresh: u8, damaged: u8) -> HashMap<Color,Ships> {
+    let mut new_ships: HashMap<Color,Ships> = ships.clone();
+    new_ships.insert(player.clone(), {
+        let s = ships.get(player).unwrap();
+        Ships { 
+            fresh: s.fresh.checked_sub(fresh).expect("Tried to remove more fresh ships than available"), 
+            damaged: s.damaged.checked_sub(damaged).expect("Tried to remove more damaged ships than available") }
+    });
     return new_ships;
 }
 

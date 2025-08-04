@@ -30,7 +30,7 @@ mod test{
                 assert_eq!(system_id, target_system);
                 assert_eq!(system_type, SystemType::Planet { resource: ResourceType::Psionics });
                 assert_eq!(building_slots, vec![BuildingSlot::Occupied { fresh: true, player: Color::Red, building_type: BuildingType::City, used: true }, BuildingSlot::Empty]);
-                assert_eq!(ships, vec![Ships{player: Color::Red, fresh: 3, damaged: 0}, Ships{player: Color::Blue, fresh: 0, damaged: 0}]);
+                assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 3, damaged: 0 }), (Color::Blue, Ships {  fresh: 0, damaged: 0 })].iter().cloned().collect());
                 assert_eq!(controlled_by, Some(Color::Red));
                 assert_eq!(connects_to, vec![4,19]);
             },
@@ -75,7 +75,7 @@ mod test{
             system_id: target_system,
             system_type: SystemType::Planet { resource: ResourceType::Material },
             building_slots: vec![BuildingSlot::Occupied { fresh: true, player: Color::Blue, building_type: BuildingType::City, used: false }],
-            ships: vec![Ships{player: Color::Red, fresh: 3, damaged: 0}, Ships{player: Color::Blue, fresh: 3, damaged: 0}],
+            ships: [(Color::Red, Ships { fresh: 3, damaged: 0 }), (Color::Blue, Ships {  fresh: 3, damaged: 0 })].iter().cloned().collect(),
             controlled_by: None,
             connects_to: vec![2, 13, 11]
         });
@@ -92,7 +92,7 @@ mod test{
             system_id: target_system,
             system_type: SystemType::Planet { resource: ResourceType::Material },
             building_slots: vec![BuildingSlot::Occupied { fresh: true, player: Color::Blue, building_type: BuildingType::City, used: false }],
-            ships: vec![Ships{player: Color::Red, fresh: 3, damaged: 0}, Ships{player: Color::Blue, fresh: 2, damaged: 0}],
+            ships: [(Color::Red, Ships { fresh: 3, damaged: 0 }), (Color::Blue, Ships {  fresh: 2, damaged: 0 })].iter().cloned().collect(),
             controlled_by: Some(Color::Red),
             connects_to: vec![2, 13, 11]
         });

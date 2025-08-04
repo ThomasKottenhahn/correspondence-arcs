@@ -75,7 +75,7 @@ mod test{
                     assert_eq!(system_id, &17);
                     assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Material });
                     assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Red, building_type: BuildingType::Starport, used: false }]);
-                    assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 1, damaged: 0}, Ships { player: Color::Blue, fresh: 0, damaged: 0}]);
+                    assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 1, damaged: 0 }), (Color::Blue, Ships {  fresh: 0, damaged: 0 })].iter().cloned().collect());
                     assert_eq!(controlled_by, &Some(Color::Red));
                     assert_eq!(connects_to, &vec![3, 16])
                 },
@@ -93,7 +93,7 @@ mod test{
                     assert_eq!(system_id, &16);
                     assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Fuel });
                     assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Red, building_type: BuildingType::Starport, used: false }, BuildingSlot::Empty]);
-                    assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 2, damaged: 0}, Ships { player: Color::Blue, fresh: 0, damaged: 0}]);
+                    assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 2, damaged: 0 }), (Color::Blue, Ships {  fresh: 0, damaged: 0 })].iter().cloned().collect());
                     assert_eq!(controlled_by, &Some(Color::Red));
                     assert_eq!(connects_to, &vec![3, 15, 17])
                 },
@@ -111,7 +111,7 @@ mod test{
                     assert_eq!(system_id, &18);
                     assert_eq!(system_type, &SystemType::Planet { resource: ResourceType::Weapons });
                     assert_eq!(building_slots, &vec![BuildingSlot::Occupied { fresh: true, player: Color::Blue, building_type: BuildingType::Starport, used: false }]);
-                    assert_eq!(ships, &vec![Ships { player: Color::Red, fresh: 0, damaged: 0}, Ships { player: Color::Blue, fresh: 5, damaged: 0}]);
+                    assert_eq!(ships.clone(), [(Color::Red, Ships { fresh: 0, damaged: 0 }), (Color::Blue, Ships {  fresh: 5, damaged: 0 })].iter().cloned().collect());
                     assert_eq!(controlled_by, &Some(Color::Blue));
                     assert_eq!(connects_to, &vec![4, 19])
                 },
